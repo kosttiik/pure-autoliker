@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Pure Auto-Liker",
+  "version": "1.0.0",
+  "description": "Авто-лайки анкетам в ленте pure.app: пропуск уже лайкнутых, рейт-лимит, фильтры по дистанции и намерению.",
+  "permissions": ["storage", "activeTab", "debugger"],
+  "host_permissions": ["https://pure.app/*"],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://pure.app/app/*"],
+      "js": ["src/selectors.js", "src/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/inject.js"],
+      "matches": ["https://pure.app/*"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "Pure Auto-Liker",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  }
+}
