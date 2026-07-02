@@ -1,55 +1,56 @@
 /*
- * Pure Auto-Liker — ЦЕНТРАЛИЗОВАННЫЕ СЕЛЕКТОРЫ.
- * Если сайт обновится и расширение перестанет находить кнопки/фильтры —
- * правьте ТОЛЬКО этот файл. Запускайте сначала в режиме Dry-run, чтобы
- * проверить, что подсвечиваются именно сердечки.
+ * Pure Auto-Liker — centralized selectors.
+ * If a Pure release breaks button/filter detection, edit ONLY this file and
+ * re-test with Dry-run first (it highlights hearts without clicking).
+ *
+ * styled-components class hashes (sc-*) change with every Pure release — never
+ * rely on them as the primary anchor. SVG paths are stable across releases;
+ * classes below are fallbacks only.
  */
 (function () {
   window.__PURE = window.__PURE || {};
 
   window.__PURE.SEL = {
-    // --- Лента ---
     feedListSelector: '#recommendations-list',
     scrollContainerSelector: '.ptr__children',
 
-    // У каждой карточки есть вложенный div с id="announcement-animation-<24hex>-"
-    // — используем его как стабильный ключ дедупликации.
+    // Every card contains a div with id="announcement-animation-<24hex>-" —
+    // used as the stable deduplication key.
     announcementIdPrefix: 'announcement-animation-',
 
-    // --- Кнопка лайка (сердечко) ---
-    // Опознаём по началу атрибута d у <path> внутри SVG кнопки.
-    // НЕ полагаемся на классы styled-components (они хэшируются).
-    // НЕЛАЙКНУТОЕ контурное сердце = кнопка, по которой кликаем:
+    // Like state is encoded in the heart's SVG path `d` prefix, not color/class.
+    // Unliked outline heart = the button to click:
     likeHeartPathPrefixes: ['M16.0004 30.7899'],
-    // ЛАЙКНУТОЕ сердце нарисовано другим путём (сердце с «хвостом кометы») —
-    // такие карточки пропускаем, не кликаем:
+    // Liked heart uses a different "comet tail" path — skip these:
     likedHeartPathPrefixes: ['M31.089 3.51995'],
-    // Это другие кнопки в той же группе (НЕ лайкать) — для явного исключения:
+    // Other buttons in the same group, explicitly excluded:
     nonLikePathPrefixes: ['M31.6004 16.102', 'M27.3996 4.2519'],
 
-    // --- Фильтры (бар сверху над лентой) ---
-    // Бар фильтров над лентой.
-    filterBarSelector: '.sc-hLiTId',
-    // Чипы в баре фильтров (локация, «Ищу» и т.д.). Конкретный ищем по тексту.
-    filterChipSelector: '.sc-foEvvu',
-    // Варианты в выпадающем попапе фильтра.
+    // Primary filter-chip anchor: every chip's background is the branded SVG
+    // blob with this path prefix.
+    chipBlobPathPrefix: 'M87.6191',
+    // Class fallbacks (observed July 2026, will go stale):
+    filterBarSelector: '.sc-cXJujA',
+    filterChipSelector: '.sc-goswLM',
     popupOptionSelector: '.sc-LFcHM',
-    // Тексты для опознания чипов/вариантов (по тексту — классы хэшируются).
+
     text: {
-      // Подписи локационного чипа: дистанции + города. Нужны и чтобы найти сам чип,
-      // и как значения для выбора в попапе.
+      // Location chip labels: distances + cities. Used to find the chip
+      // (a city chip is more reliably detected by its data:image flag) and as
+      // popup option values.
       locationLabels: [
         'Рядом', 'Соседи', 'Неподалёку', 'На горизонте', 'Далеко, но близко', 'Вся вселенная',
-        'Москва', 'Лондон', 'Нью-Йорк', 'Париж', 'Лос-Анджелес', 'Сидней', 'Берлин', 'Чикаго', 'Сингапур', 'Торонто'
+        'Москва', 'Санкт-Петербург', 'Лондон', 'Нью-Йорк', 'Париж', 'Лос-Анджелес',
+        'Сидней', 'Берлин', 'Чикаго', 'Сингапур', 'Торонто', 'Дубай', 'Стамбул', 'Тбилиси'
       ],
 
-      alreadyLiked: 'Лайк уже был'   // тост при повторном лайке — значит анкета уже лайкнута
+      // Toast shown on a repeated like click — the only DOM signal of "already liked".
+      alreadyLiked: 'Лайк уже был'
     },
 
-    // Контейнеры, куда сайт рендерит попапы/порталы.
+    // Containers the site renders popups/portals into.
     portalRoots: ['#popup-root', '#portal-root'],
 
-    // --- Сеть ---
     likeApiFragment: '/reactions/sent/likes'
   };
 })();

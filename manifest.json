@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Pure Auto-Liker",
-  "version": "1.0.0",
-  "description": "Авто-лайки анкетам в ленте pure.app: пропуск уже лайкнутых, рейт-лимит, фильтры по дистанции и намерению.",
+  "version": "2.0.0",
+  "description": "Авто-лайки анкетам в ленте pure.app: пропуск уже лайкнутых, рейт-лимит, авто-выбор локации (включая произвольный город), пресеты темпа.",
   "permissions": ["storage", "activeTab", "debugger"],
   "host_permissions": ["https://pure.app/*"],
   "background": {

@@ -5,48 +5,44 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
+  <div class="fx" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i></div>
+
   <div class="app">
-    <!-- ---------- Шапка ---------- -->
     <header class="hdr">
       <div class="aurora" aria-hidden="true"></div>
-      <div class="sparks" aria-hidden="true"><i>♥</i><i>♥</i><i>♥</i><i>♥</i><i>♥</i></div>
+      <div class="sparks" aria-hidden="true"><i>♥</i><i>♥</i><i>♥</i><i>♥</i><i>♥</i><i>♥</i></div>
 
-      <div class="logo" id="logo" aria-hidden="true">
-        <svg viewBox="0 0 32 32" width="24" height="24">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="22" height="22">
           <path d="M16 28C5.5 20.7 2 16.2 2 10.8 2 6.9 4.9 4 8.6 4c2.6 0 5 1.5 6.1 3.8C15.9 5.5 18.3 4 20.9 4 24.6 4 27.5 6.9 27.5 10.8 27.5 16.2 24 20.7 16 28Z" fill="#fff"/>
         </svg>
       </div>
       <div class="title">
         <h1>Pure Auto-Liker</h1>
-        <p>авто-лайки ленты</p>
+        <p>умные авто-лайки</p>
       </div>
-      <div class="statuspill" id="status">
+      <div class="statuspill">
         <span class="dot" id="dot"></span>
         <span id="statusText">—</span>
       </div>
-      <div class="runbar" id="runbar" aria-hidden="true"></div>
+      <div class="runbar" aria-hidden="true"></div>
     </header>
 
     <main>
-      <!-- ---------- Счётчики ---------- -->
       <section class="counters reveal" style="--d:1">
-        <div class="cnt">
-          <span class="cnt-ic">⚡</span>
-          <b id="cSession">0</b><span class="cnt-l">за сессию</span>
-        </div>
-        <div class="cnt">
-          <span class="cnt-ic">📅</span>
-          <b id="cToday">0</b><span class="cnt-l">сегодня</span>
-        </div>
-        <div class="cnt">
-          <span class="cnt-ic">📍</span>
-          <b id="cMode" class="cnt-mode">—</b><span class="cnt-l">режим</span>
-        </div>
+        <div class="cnt"><b id="cSession">0</b><span>за сессию</span></div>
+        <div class="cnt"><b id="cToday">0</b><span>сегодня</span></div>
+        <div class="cnt"><b id="cTotal">0</b><span>всего</span></div>
       </section>
 
-      <div class="err reveal" id="err" hidden style="--d:1"></div>
+      <div class="chips reveal" style="--d:1">
+        <span class="chip" id="modeChip" hidden>📍 <b id="cMode"></b></span>
+        <span class="chip" id="rateChip" hidden>⚡ <b id="cRate"></b>/час</span>
+      </div>
 
-      <!-- ---------- Управление ---------- -->
+      <div class="banner err" id="err" hidden></div>
+      <div class="banner note" id="filterNote" hidden></div>
+
       <div class="controls reveal" style="--d:2">
         <button id="startBtn" class="btn primary">
           <span class="sheen" aria-hidden="true"></span>
@@ -55,68 +51,90 @@
         </button>
         <button id="stopBtn" class="btn ghost">
           <svg viewBox="0 0 24 24" width="13" height="13"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
-          Стоп
+          <span>Стоп</span>
         </button>
       </div>
 
-      <!-- ---------- Настройки ---------- -->
       <section class="card reveal" style="--d:3">
-        <h2>Настройки</h2>
-
+        <h2>📍 Локация</h2>
         <label class="field">
-          <span>Дистанция</span>
           <select id="distance">
-            <option value="keep">Не менять</option>
-            <option value="Рядом">Рядом · &lt;5 км</option>
-            <option value="Соседи">Соседи · 10 км</option>
-            <option value="Неподалёку">Неподалёку · 30 км</option>
-            <option value="На горизонте">На горизонте · 50 км</option>
-            <option value="Далеко, но близко">Далеко, но близко · 100 км</option>
-            <option value="Вся вселенная">Вся вселенная · &gt;100 км</option>
-            <option value="Москва">Москва</option>
-            <option value="Лондон">Лондон</option>
-            <option value="Нью-Йорк">Нью-Йорк</option>
-            <option value="Париж">Париж</option>
-            <option value="Лос-Анджелес">Лос-Анджелес</option>
-            <option value="Сидней">Сидней</option>
-            <option value="Берлин">Берлин</option>
-            <option value="Чикаго">Чикаго</option>
-            <option value="Сингапур">Сингапур</option>
-            <option value="Торонто">Торонто</option>
+            <option value="keep">Не менять — как выбрано на сайте</option>
+            <optgroup label="Дистанция">
+              <option value="Рядом">Рядом · &lt;5 км</option>
+              <option value="Соседи">Соседи · 10 км</option>
+              <option value="Неподалёку">Неподалёку · 30 км</option>
+              <option value="На горизонте">На горизонте · 50 км</option>
+              <option value="Далеко, но близко">Далеко, но близко · 100 км</option>
+              <option value="Вся вселенная">Вся вселенная · &gt;100 км</option>
+            </optgroup>
+            <optgroup label="Города">
+              <option value="Москва">Москва</option>
+              <option value="Санкт-Петербург">Санкт-Петербург</option>
+              <option value="Лондон">Лондон</option>
+              <option value="Нью-Йорк">Нью-Йорк</option>
+              <option value="Париж">Париж</option>
+              <option value="Лос-Анджелес">Лос-Анджелес</option>
+              <option value="Берлин">Берлин</option>
+              <option value="Дубай">Дубай</option>
+              <option value="Стамбул">Стамбул</option>
+              <option value="Сингапур">Сингапур</option>
+            </optgroup>
+            <option value="custom">✏️ Другой город…</option>
           </select>
         </label>
-
+        <label class="field slidein" id="customCityRow" hidden>
+          <span>Название города</span>
+          <input type="text" id="customCity" placeholder="например, Тбилиси" autocomplete="off">
+          <small>Найду его через поиск в попапе локации на сайте</small>
+        </label>
         <div class="toggle-row">
-          <span>Авто-выставлять фильтры <small>иначе берём текущие на сайте</small></span>
+          <span>Авто-выставлять фильтр <small>иначе берём текущий на сайте</small></span>
           <label class="switch"><input type="checkbox" id="autoFilters"><i></i></label>
-        </div>
-        <div class="toggle-row">
-          <span>Dry-run <small>подсветка, без кликов</small></span>
-          <label class="switch"><input type="checkbox" id="dryRun"><i></i></label>
-        </div>
-
-        <div class="sep"><span>Темп лайков</span></div>
-        <div class="grid2">
-          <label class="field"><span>Задержка мин, мс</span><input type="number" id="minDelay" min="0" step="100"></label>
-          <label class="field"><span>Задержка макс, мс</span><input type="number" id="maxDelay" min="0" step="100"></label>
-        </div>
-        <div class="grid2">
-          <label class="field"><span>Длинная пауза каждые</span><input type="number" id="longPauseEvery" min="0" step="1"></label>
-          <label class="field"><span>Лимит/день <small>0 = нет</small></span><input type="number" id="dailyCap" min="0" step="10"></label>
-        </div>
-
-        <div class="sep"><span>Прокрутка по лайкнутым</span></div>
-        <div class="grid2">
-          <label class="field"><span>Пауза мин, мс</span><input type="number" id="scrollPauseMin" min="0" step="100"></label>
-          <label class="field"><span>Пауза макс, мс</span><input type="number" id="scrollPauseMax" min="0" step="100"></label>
         </div>
       </section>
 
-      <p class="hint reveal" style="--d:4">Открой ленту pure.app и жми <b>Старт</b>. Первый раз — включи <b>Dry-run</b>: расширение подсветит сердечки, ничего не кликая.</p>
-      <p class="hint reveal" style="--d:5">Окно можно <b>закрыть</b> — лайки идут в фоне. Сверху висит баннер <b>«…запустил отладку браузера»</b> — так и нужно, не закрывай его и не открывай DevTools на этой вкладке.</p>
+      <section class="card reveal" style="--d:4">
+        <h2>🚀 Темп</h2>
+        <div class="presets" id="presets">
+          <button type="button" class="preset" data-preset="calm"><i>🐢</i><b>Спокойный</b><small>1.5–3 c</small></button>
+          <button type="button" class="preset" data-preset="normal"><i>⚖️</i><b>Обычный</b><small>0.8–1.2 c</small></button>
+          <button type="button" class="preset" data-preset="turbo"><i>🚀</i><b>Турбо</b><small>0.35–0.7 c</small></button>
+        </div>
+        <details class="adv" id="advBox">
+          <summary>Точная настройка <i class="chev" aria-hidden="true"></i></summary>
+          <div class="adv-body">
+            <div class="grid2">
+              <label class="field"><span>Задержка мин, мс</span><input type="number" id="minDelay" min="0" step="100"></label>
+              <label class="field"><span>Задержка макс, мс</span><input type="number" id="maxDelay" min="0" step="100"></label>
+            </div>
+            <div class="grid2">
+              <label class="field"><span>Длинная пауза каждые</span><input type="number" id="longPauseEvery" min="0" step="1"></label>
+              <label class="field"><span>Лимит/день <small>0 = нет</small></span><input type="number" id="dailyCap" min="0" step="10"></label>
+            </div>
+            <div class="grid2">
+              <label class="field"><span>Скролл-пауза мин, мс</span><input type="number" id="scrollPauseMin" min="0" step="100"></label>
+              <label class="field"><span>Скролл-пауза макс, мс</span><input type="number" id="scrollPauseMax" min="0" step="100"></label>
+            </div>
+          </div>
+        </details>
+        <div class="toggle-row">
+          <span>Dry-run <small>только подсветка, без кликов</small></span>
+          <label class="switch"><input type="checkbox" id="dryRun"><i></i></label>
+        </div>
+      </section>
+
+      <details class="hints reveal" style="--d:5">
+        <summary>💡 Как пользоваться <i class="chev" aria-hidden="true"></i></summary>
+        <div class="hints-body">
+          <p>Открой ленту <b>pure.app</b> и жми <b>Старт</b>. Первый раз включи <b>Dry-run</b> — расширение подсветит сердечки, ничего не кликая.</p>
+          <p>Окно можно <b>закрыть</b> — лайки идут в фоне, счётчик виден на иконке. Сверху вкладки висит баннер <b>«…запустил отладку браузера»</b> — так и нужно: не закрывай его и не открывай DevTools на этой вкладке.</p>
+        </div>
+      </details>
     </main>
   </div>
 
+  <div class="toast" id="toast">✓ Сохранено</div>
   <script src="popup.js"></script>
 </body>
 </html>

@@ -1,12 +1,12 @@
 /*
- * Pure Auto-Liker — движок (isolated content-script world).
- * Запускается на pure.app/app/*. Управляется из попапа сообщениями.
+ * Pure Auto-Liker — engine (isolated content-script world).
+ * Runs on pure.app/app/*, controlled by the popup via messages.
  */
 (function () {
   const SEL = (window.__PURE && window.__PURE.SEL) || {};
   const LOG = '[PureLiker]';
 
-  // ---------- Инжект перехватчика fetch в контекст страницы ----------
+  // Content scripts can't observe page fetch — inject an interceptor into the page context.
   (function injectPageScript() {
     try {
       const s = document.createElement('script');
@@ -16,33 +16,34 @@
     } catch (e) { console.warn(LOG, 'inject failed', e); }
   })();
 
-  // ---------- Конфиг по умолчанию ----------
   const DEFAULTS = {
     minDelay: 800,
     maxDelay: 1200,
-    longPauseEvery: 40,        // каждые N лайков — длинная пауза
+    longPauseEvery: 40,
     longPauseMinMs: 60000,
     longPauseMaxMs: 120000,
-    distance: 'keep',          // 'keep' (не трогать) или подпись: 'Рядом', 'На горизонте', 'Москва'…
-    autoFilters: true,         // мастер-выключатель: разрешить расширению менять фильтры на сайте
+    distance: 'keep',          // 'keep' (don't touch), a chip label ('Рядом', 'Москва'…) or 'custom'
+    customCity: '',            // used when distance === 'custom'
+    autoFilters: true,
     dryRun: false,
-    dailyCap: 0,               // 0 = без лимита
-    scrollPauseMin: 600,       // рейт-лимит промотки: пауза между шагами скролла, мс
+    dailyCap: 0,               // 0 = unlimited
+    scrollPauseMin: 600,
     scrollPauseMax: 1400,
-    maxScrollTries: 15         // сколько раз скроллим без новых карточек прежде чем закончить пасс
+    maxScrollTries: 15
   };
 
-  // ---------- Состояние ----------
   const state = {
     running: false,
     paused: false,
-    gen: 0,                    // поколение запуска: новый Старт инвалидирует старый цикл
+    gen: 0,                    // run generation: a new Start invalidates any older loop
     statusText: 'остановлен',
     currentMode: null,
-    liked: new Map(),          // id -> момент лайка (epoch ms); лайк на Pure живёт 24ч
-    lastLike: null,            // {ts, ok, blocked, status} — результат POST-лайка из inject.js
+    liked: new Map(),          // id -> like timestamp (epoch ms)
+    lastLike: null,            // {ts, ok, blocked, status} from inject.js
     cfg: Object.assign({}, DEFAULTS),
-    counters: { session: 0, today: 0, day: todayStr() },
+    counters: { session: 0, today: 0, total: 0, day: todayStr() },
+    startedAt: null,
+    filterNote: null,          // human-readable outcome of the location filter attempt
     lastError: null
   };
 
@@ -50,11 +51,10 @@
   function rand(a, b) { return a + Math.random() * (b - a); }
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  // ---------- Память лайков (между сессиями) ----------
-  // Лайк на Pure истекает ровно через 24ч — после этого анкету можно лайкать заново,
-  // поэтому храним момент лайка и считаем «лайкнутым» только в пределах TTL.
-  const LIKED_CAP = 5000;                  // не даём карте расти бесконечно
-  const LIKE_TTL_MS = 24 * 60 * 60 * 1000; // 24 часа
+  // Likes on Pure expire exactly 24h after being set — the profile can be liked
+  // again after that, so entries are only treated as "liked" within the TTL.
+  const LIKED_CAP = 5000;
+  const LIKE_TTL_MS = 24 * 60 * 60 * 1000;
   let likedPersistTimer = null;
 
   function likedRecently(id) {
@@ -76,18 +76,17 @@
 
   function markLiked(id) {
     if (!id) return;
-    state.liked.set(id, Date.now());       // обновляем таймстамп (в т.ч. при повторном лайке после 24ч)
+    state.liked.set(id, Date.now());
     if (state.liked.size > LIKED_CAP) {
-      // Map сохраняет порядок вставки — выкидываем самые старые записи.
+      // Map preserves insertion order — drop the oldest entries.
       const keep = Array.from(state.liked).slice(-LIKED_CAP);
       state.liked = new Map(keep);
     }
     persistLikedSoon();
   }
 
-  // ---------- Сигналы от перехватчика fetch ----------
-  // inject.js ловит POST /reactions/sent/likes и присылает результат — по нему
-  // подтверждаем реальный лайк (201/200) и ловим блокировку/капчу (403/429).
+  // Like results from the fetch interceptor: confirms real likes (200/201) and
+  // catches blocking/captcha (403/429).
   window.addEventListener('message', function (ev) {
     const d = ev.data;
     if (!d || d.source !== 'PURE_AUTO_LIKER') return;
@@ -100,9 +99,8 @@
     }
   });
 
-  // ---------- Наблюдатель тоста «Лайк уже был» ----------
-  // В DOM состояние лайка не отражается; единственный сигнал «уже лайкнуто» —
-  // тост при повторном клике. Ловим его появление через MutationObserver.
+  // The DOM does not reflect like state; the only "already liked" signal is a
+  // toast shown on a repeated click — watch for it via MutationObserver.
   let lastAlreadyToastTs = 0;
   function startToastObserver() {
     const phrase = (SEL.text && SEL.text.alreadyLiked) || 'Лайк уже был';
@@ -119,7 +117,8 @@
     } catch (e) { console.warn(LOG, 'toast observer failed', e); }
   }
 
-  // ---------- Доверенный клик через фон (CDP) ----------
+  // Pure rejects clicks with isTrusted=false, so all clicks go through the
+  // background worker as CDP Input.dispatchMouseEvent (chrome.debugger).
   function trustedClickAt(btn) {
     const r = btn.getBoundingClientRect();
     const x = Math.round(r.left + r.width / 2);
@@ -138,7 +137,8 @@
     try { chrome.runtime.sendMessage({ cmd: 'detachDebugger' }, () => void chrome.runtime.lastError); } catch (e) {}
   }
 
-  // Доверенная прокрутка колесом через фон (как живой скролл) — для надёжной подгрузки.
+  // Programmatic scrollTop doesn't wake the virtualized feed's lazy loading —
+  // only a trusted wheel event does.
   function trustedWheel(x, y, deltaY) {
     return new Promise((resolve) => {
       try {
@@ -149,11 +149,38 @@
     });
   }
 
-  // Доверенный клик по элементу (фильтры и т.п.) — сперва в центр экрана,
-  // потом CDP-клик по координатам. Pure режет синтетические клики везде.
+  // Pure's React inputs ignore synthetic input events the same way they ignore
+  // synthetic clicks — city search typing must go through CDP Input.insertText.
+  function trustedType(text) {
+    return new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ cmd: 'trustedType', text }, (resp) => {
+          void chrome.runtime.lastError; resolve(resp || { ok: false });
+        });
+      } catch (e) { resolve({ ok: false, error: String(e) }); }
+    });
+  }
+
+  function trustedKey(key) {
+    return new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ cmd: 'trustedKey', key }, (resp) => {
+          void chrome.runtime.lastError; resolve(resp || { ok: false });
+        });
+      } catch (e) { resolve({ ok: false, error: String(e) }); }
+    });
+  }
+
+  function updateBadge() {
+    try {
+      const text = state.running && state.counters.session > 0 ? String(state.counters.session) : '';
+      chrome.runtime.sendMessage({ cmd: 'badge', text }, () => void chrome.runtime.lastError);
+    } catch (e) {}
+  }
+
   async function clickTrusted(el) {
     if (!el) return { ok: false, error: 'нет элемента' };
-    // Скроллим только если элемент вне экрана — иначе можно случайно сдвинуть попап.
+    // Scroll only when off-screen — coordinates are taken right before the CDP click.
     if (!isInViewport(el)) {
       try { el.scrollIntoView({ block: 'center', behavior: 'auto' }); } catch (e) {}
       await sleep(60);
@@ -161,7 +188,6 @@
     return await trustedClickAt(el);
   }
 
-  // Диагностика ленты — что движок видит прямо сейчас.
   function feedDiag() {
     const list = document.querySelector(SEL.feedListSelector);
     const scope = list || document.body;
@@ -176,7 +202,6 @@
            ' нелайкнутых-сердец=' + likeable + ' лайкнутых=' + liked;
   }
 
-  // ---------- Детект капчи ----------
   function captchaVisible() {
     const ifr = document.querySelector('iframe[src*="recaptcha"][title*="challenge"], iframe[title*="recaptcha"]');
     if (!ifr) return false;
@@ -191,13 +216,14 @@
     console.warn(LOG, 'auto-pause:', reason);
   }
 
-  // ---------- Поиск кнопок лайка ----------
   function pathStartsWithAny(d, prefixes) {
     if (!d) return false;
     const t = d.trim();
     return prefixes.some((p) => t.indexOf(p) === 0);
   }
 
+  // Like state is distinguished by the heart's SVG path, not by color/class:
+  // unliked = outline heart, liked = a different "comet tail" path.
   function isLikeButton(btn) {
     const paths = btn.querySelectorAll('svg path');
     for (const p of paths) {
@@ -208,9 +234,6 @@
     return false;
   }
 
-  // ---------- Лайкнуто? — по SVG-пути ----------
-  // Лайкнутое сердце рисуется ДРУГИМ путём (сердце с «хвостом кометы»),
-  // нелайкнутое — контурное сердце. Это надёжнее любого цвета.
   function isLikedHeart(btn) {
     const paths = btn.querySelectorAll('svg path');
     for (const p of paths) {
@@ -220,7 +243,6 @@
     return false;
   }
 
-  // Возвращает {root, id} для карточки, которой принадлежит кнопка.
   function cardInfo(btn) {
     let el = btn;
     while (el && el !== document.body) {
@@ -236,9 +258,8 @@
     return null;
   }
 
-  // Все ещё не лайкнутые кнопки-сердечки, видимые в DOM.
-  // Если контейнер ленты не найден — ищем по всему документу (путь сердца
-  // достаточно специфичен, чужие кнопки не зацепит).
+  // All not-yet-liked heart buttons currently in the DOM. Falls back to the whole
+  // document if the feed container is missing — the heart path is specific enough.
   function findLikeTargets() {
     const list = document.querySelector(SEL.feedListSelector) || document.body;
     const out = [];
@@ -247,8 +268,8 @@
       if (!isLikeButton(btn)) continue;
       const info = cardInfo(btn);
       if (!info) continue;
-      if (likedRecently(info.id)) continue;       // лайкнули < 24ч назад — лайк ещё активен
-      if (isLikedHeart(btn)) {                     // уже лайкнуто на сайте — не трогаем
+      if (likedRecently(info.id)) continue;
+      if (isLikedHeart(btn)) {
         markLiked(info.id);
         continue;
       }
@@ -275,10 +296,8 @@
     } catch (e) {}
   }
 
-  // ---------- Скролл ----------
-  // Надёжно находим реальный прокручиваемый контейнер ленты: явный селектор →
-  // ближайший прокручиваемый предок списка → документ. Виртуализированные ленты
-  // часто скроллятся не в documentElement, а во вложенном div с overflow:auto.
+  // The virtualized feed scrolls inside a nested overflow:auto div, not the
+  // document: explicit selector → closest scrollable ancestor of the list → document.
   function getScroller() {
     const explicit = document.querySelector(SEL.scrollContainerSelector);
     if (explicit && explicit.scrollHeight > explicit.clientHeight + 20) return explicit;
@@ -293,7 +312,7 @@
       } catch (e) {}
       el = el.parentElement;
     }
-    if (explicit) return explicit; // хоть что-то
+    if (explicit) return explicit;
     return document.scrollingElement || document.documentElement;
   }
 
@@ -301,10 +320,8 @@
     return Array.from(document.querySelectorAll('[id^="' + SEL.announcementIdPrefix + '"]')).map((e) => e.id);
   }
 
-  // Быстрая промотка вниз в поиске нелайкнутых + принудительная догрузка ленты.
-  // Мотаем НЕСКОЛЬКИМИ способами (scrollTop контейнера, window, прокрутка последней
-  // карточки в видимость) — чтобы сдвинуть любой тип ленты. Прогресс считаем по
-  // сдвигу/росту высоты/СМЕНЕ набора карточек, поэтому движок не застревает.
+  // Advance the feed downwards and force lazy loading. Progress is measured by
+  // scroll offset / height growth / card-set change, so the engine can't stall.
   async function advanceFeed(aggressive) {
     const sc = getScroller();
     const beforeTop = sc.scrollTop;
@@ -315,7 +332,6 @@
     const hard = aggressive || atBottom;
     const step = Math.round(sc.clientHeight * (hard ? 1.6 : 0.9));
 
-    // Точка прокрутки — центр видимой части ленты.
     let cx, cy;
     try {
       const r = sc.getBoundingClientRect();
@@ -326,32 +342,29 @@
     } catch (e) {}
     if (cx == null) { cx = Math.round(window.innerWidth / 2); cy = Math.round(window.innerHeight / 2); }
 
-    // ДОВЕРЕННЫЙ wheel ВНИЗ (deltaY>0). При застревании — несколько импульсов подряд.
     const bursts = hard ? 3 : 1;
     for (let i = 0; i < bursts; i++) {
       await trustedWheel(cx, cy, Math.round(step / bursts));
       if (bursts > 1) await sleep(50);
     }
 
-    // Программный фолбэк — СТРОГО ВНИЗ и монотонно (никогда не уменьшаем scrollTop,
-    // поэтому никакой дёрготни вверх). scrollIntoView НЕ используем — он мог скроллить вверх.
+    // Programmatic fallback — strictly downwards and monotonic (scrollIntoView is
+    // avoided: it can scroll up and make the feed jitter).
     try { sc.scrollTop = Math.max(sc.scrollTop, beforeTop + step); } catch (e) {}
-    // На самом дне — добиваем в конец, чтобы триггернуть бесконечную подгрузку.
     if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 4) {
       try { sc.scrollTop = sc.scrollHeight; } catch (e) {}
     }
 
-    await sleep(hard ? rand(450, 700) : rand(200, 320)); // дать дорендерить
+    await sleep(hard ? rand(450, 700) : rand(200, 320));
 
     const after = cardIds();
     const afterKey = after.length + '|' + (after[after.length - 1] || '');
     const grew = sc.scrollHeight > beforeH + 8;
-    const moved = sc.scrollTop - beforeTop > 4;          // прогресс только вниз
-    const cardsChanged = afterKey !== beforeKey;        // появились/сменились карточки
+    const moved = sc.scrollTop - beforeTop > 4;
+    const cardsChanged = afterKey !== beforeKey;
     return grew || moved || cardsChanged;
   }
 
-  // ---------- Фильтры ----------
   async function waitFeedRerender(timeoutMs) {
     const list = document.querySelector(SEL.feedListSelector);
     if (!list) { await sleep(1500); return; }
@@ -364,39 +377,65 @@
     await sleep(800);
   }
 
-  // Чип в баре фильтров, чей текст содержит одну из подписей.
+  // styled-components class hashes change with every Pure release, so the primary
+  // anchor is the branded SVG "blob" every chip is drawn with (its path is stable).
+  // Class selectors are a fallback only.
+  function findFilterChips() {
+    const scope = document.querySelector(SEL.filterBarSelector) || document;
+    const chips = [];
+    const pref = SEL.chipBlobPathPrefix;
+    if (pref) {
+      for (const p of scope.querySelectorAll('svg path')) {
+        const d = (p.getAttribute('d') || '').trim();
+        if (d.indexOf(pref) !== 0) continue;
+        // Chip structure: <div chip> <span><svg blob/></span> <div label/> </div>
+        const holder = p.closest('span');
+        const chip = holder && holder.parentElement;
+        if (chip && (chip.textContent || '').trim() && chips.indexOf(chip) === -1) chips.push(chip);
+      }
+    }
+    if (chips.length) return chips;
+    return Array.from(scope.querySelectorAll(SEL.filterChipSelector));
+  }
+
   function findChipByLabels(labels) {
-    const bar = document.querySelector(SEL.filterBarSelector) || document;
-    const chips = bar.querySelectorAll(SEL.filterChipSelector);
-    for (const c of chips) {
+    for (const c of findFilterChips()) {
       const t = (c.textContent || '').trim();
       for (const lab of labels) { if (lab && t.indexOf(lab) !== -1) return c; }
     }
     return null;
   }
-  // Чип локации/дистанции (показывает текущий город или радиус).
+
+  // Location chip detection order: country-flag img (data:image → a city is
+  // selected) → known labels → first chip (location is always first on Pure).
   function findLocationChip() {
-    const bar = document.querySelector(SEL.filterBarSelector) || document;
-    return findChipByLabels(SEL.text.locationLabels || []) ||
-           bar.querySelector(SEL.filterChipSelector);
+    const chips = findFilterChips();
+    for (const c of chips) {
+      const img = c.querySelector('img');
+      if (img && (img.getAttribute('src') || '').indexOf('data:image') === 0) return c;
+    }
+    return findChipByLabels(SEL.text.locationLabels || []) || chips[0] || null;
   }
 
-  // Контейнер открытого попапа — чтобы искать варианты ТОЛЬКО в нём, а не по всей
-  // странице (иначе после смены фильтра текст варианта может совпасть с текстом в
-  // ленте, и клик уйдёт в карточку профиля).
+  // Root of the open filter popup. Options must be searched ONLY inside it:
+  // after a filter change the option text may also appear in the feed, and a
+  // page-wide match would send the click into a profile card.
   function popupRoot() {
+    for (const s of (SEL.portalRoots || [])) {
+      const el = document.querySelector(s);
+      if (el && el.childElementCount > 0 && (el.textContent || '').trim()) return el;
+    }
     const anyOpt = document.querySelector(SEL.popupOptionSelector);
     if (anyOpt) {
       let el = anyOpt;
       for (let i = 0; i < 6 && el.parentElement && el.parentElement !== document.body; i++) el = el.parentElement;
       return el;
     }
-    const portals = (SEL.portalRoots || []).map((s) => document.querySelector(s)).filter(Boolean);
-    return portals[0] || null;
+    return null;
   }
 
-  // Вариант в попапе по тексту: сперва штатные опции (по селектору), затем —
-  // подходящий элемент ВНУТРИ попапа (у разных попапов классы отличаются).
+  function popupIsOpen() { return !!popupRoot(); }
+
   function findPopupOption(label) {
     const direct = document.querySelectorAll(SEL.popupOptionSelector);
     for (const o of direct) {
@@ -416,25 +455,48 @@
     return best;
   }
 
+  // Loose match for city search results: popup element whose text starts with
+  // the typed prefix (case-insensitive).
+  function fuzzyPopupOption(label) {
+    const root = popupRoot();
+    if (!root) return null;
+    const needle = label.trim().toLowerCase().slice(0, 4);
+    if (!needle) return null;
+    let best = null;
+    for (const el of root.querySelectorAll('div,span,li,button,label,p')) {
+      if (el.querySelector('input')) continue;
+      const t = (el.textContent || '').trim();
+      if (t && t.length < 48 && t.toLowerCase().indexOf(needle) === 0) {
+        if (!best || t.length < (best.textContent || '').trim().length) best = el;
+      }
+    }
+    return best;
+  }
+
+  function popupSearchInput() {
+    const root = popupRoot();
+    if (!root) return null;
+    return root.querySelector('input[type="search"], input[type="text"], input:not([type])');
+  }
+
   async function waitForOptions(timeoutMs) {
     const t0 = Date.now();
     while (Date.now() - t0 < timeoutMs) {
-      if (document.querySelector(SEL.popupOptionSelector)) return true;
+      if (document.querySelector(SEL.popupOptionSelector) || popupIsOpen()) return true;
       await sleep(120);
     }
     return false;
   }
 
-  // Закрыть открытый попап и дождаться его исчезновения (иначе следующий клик
-  // уйдёт в исчезающие элементы прошлого попапа).
+  // Close via Escape only — an "outside" click at screen center could land on a
+  // feed card and open a profile.
   async function closePopups() {
-    if (!document.querySelector(SEL.popupOptionSelector)) return;
-    await clickTrusted(document.body);
+    if (!popupIsOpen()) return;
+    await trustedKey('Escape');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    for (let i = 0; i < 15 && document.querySelector(SEL.popupOptionSelector); i++) await sleep(120);
+    for (let i = 0; i < 15 && popupIsOpen(); i++) await sleep(120);
   }
 
-  // Открыть меню чипа: сперва закрыть прошлый попап, кликнуть, дождаться вариантов.
   async function openChipMenu(chip, what) {
     await closePopups();
     await clickTrusted(chip);
@@ -443,50 +505,84 @@
     return true;
   }
 
-  // Одиночный выбор (локация/город) — после клика меню закрывается само.
-  async function setSingleFilter(chip, optionLabel, what) {
-    if (!chip) { console.warn(LOG, 'не нашёл чип «' + what + '» — выставьте вручную'); return false; }
-    if ((chip.textContent || '').indexOf(optionLabel) !== -1) return true; // уже выбрано
-    state.statusText = 'фильтр: ' + optionLabel;
-    if (!(await openChipMenu(chip, what))) return false;
-    const opt = findPopupOption(optionLabel);
-    if (!opt) { console.warn(LOG, 'нет варианта «' + optionLabel + '» в попапе «' + what + '»'); await closePopups(); return false; }
+  // Set the location (distance or city). If the popup has no ready-made option
+  // (arbitrary city), type into its search field and pick a result. The final
+  // chip text is re-checked to verify the selection actually applied.
+  async function setLocationFilter(label) {
+    const chip = findLocationChip();
+    if (!chip) {
+      state.filterNote = 'чип локации не найден — выставь на сайте вручную';
+      console.warn(LOG, state.filterNote);
+      return false;
+    }
+    if ((chip.textContent || '').indexOf(label) !== -1) {
+      state.filterNote = 'локация: ' + label;
+      return true;
+    }
+    state.statusText = 'ставлю локацию: ' + label;
+    if (!(await openChipMenu(chip, 'локация'))) {
+      state.filterNote = 'попап локации не открылся';
+      return false;
+    }
+
+    let opt = findPopupOption(label);
+    if (!opt) {
+      const input = popupSearchInput();
+      if (input) {
+        await clickTrusted(input);
+        await sleep(rand(150, 260));
+        await trustedType(label);
+        await sleep(rand(800, 1200)); // let search results load
+        opt = findPopupOption(label) || fuzzyPopupOption(label);
+      }
+    }
+    if (!opt) {
+      state.filterNote = 'вариант «' + label + '» не найден в попапе';
+      console.warn(LOG, state.filterNote);
+      await closePopups();
+      return false;
+    }
+
     await clickTrusted(opt);
     await sleep(rand(300, 500));
     await closePopups();
     await waitFeedRerender(4000);
-    console.log(LOG, 'фильтр выставлен:', optionLabel);
-    return true;
+
+    const now = findLocationChip();
+    const ok = !!now && (now.textContent || '').indexOf(label) !== -1;
+    state.filterNote = ok
+      ? 'локация: ' + label
+      : 'локация не подтвердилась, на чипе: «' + (((now && now.textContent) || '?').trim()) + '»';
+    console.log(LOG, state.filterNote);
+    return ok;
   }
 
-  // Выставляем дистанцию/город, если задано. Вызывается один раз за запуск.
   async function applyFilters() {
+    state.filterNote = null;
     if (!state.cfg.autoFilters) return true;
     try {
-      const d = state.cfg.distance;
-      if (d && d !== 'keep') await setSingleFilter(findLocationChip(), d, 'локация');
+      let want = state.cfg.distance;
+      if (want === 'custom') want = (state.cfg.customCity || '').trim();
+      if (want && want !== 'keep') await setLocationFilter(want);
     } catch (e) { console.warn(LOG, 'applyFilters error', e); }
     return true;
   }
 
-  // ---------- Один лайк ----------
-  // Ждём исхода клика: успех по сети (POST 201) / тост «уже лайкнуто» /
-  // удаление карточки / отказ сети. Возвращает строку-исход.
   async function waitLikeOutcome(btn, t0, timeoutMs) {
     while (Date.now() - t0 < timeoutMs) {
       if (lastAlreadyToastTs > t0) return 'already';
       if (state.lastLike && state.lastLike.ts > t0) {
         if (state.lastLike.blocked) return 'blocked';
         if (state.lastLike.ok) return 'liked-new';
-        return 'rejected';                       // POST не 2xx — лимит/уже лайкнуто
+        return 'rejected';
       }
-      if (!btn.isConnected) return 'liked-new';  // карточку убрали — лайк прошёл
+      if (!btn.isConnected) return 'liked-new';  // card removed — the like went through
       await sleep(100);
     }
     return 'uncertain';
   }
 
-  // Диагностика кнопки для калибровки (Dry-run): что отличает лайкнутую от нет.
+  // Dry-run diagnostics: what distinguishes a liked button from an unliked one.
   function heartDiag(btn) {
     const svg = btn.querySelector('svg');
     const path = svg && svg.querySelector('path');
@@ -503,8 +599,8 @@
   }
 
   async function likeOne(target) {
-    // Подтягиваем кнопку в видимость минимально (nearest), чтобы не дёргать ленту
-    // вверх — координаты для CDP-клика берём прямо перед кликом.
+    // block:'nearest' avoids pulling the feed upwards; CDP click coordinates are
+    // taken right before the click.
     if (!isInViewport(target.btn)) {
       target.btn.scrollIntoView({ block: 'nearest', behavior: 'auto' });
       await sleep(rand(80, 160));
@@ -512,13 +608,12 @@
 
     if (state.cfg.dryRun) {
       highlight(target.root, target.btn);
-      state.liked.set(target.id, Date.now()); // только в памяти сессии, без записи в storage
+      state.liked.set(target.id, Date.now()); // session-only, not persisted
       console.log(LOG, '[DRY-RUN] сердечко id=', target.id, heartDiag(target.btn));
       return true;
     }
 
-    // Страховка от гонки: если карточка уже лайкнута (по пути) или попала в память —
-    // НЕ кликаем, просто пропускаем, чтобы быстро мотать дальше.
+    // Race guard: skip without clicking if the card got liked meanwhile.
     if (likedRecently(target.id) || isLikedHeart(target.btn) || !isLikeButton(target.btn)) {
       markLiked(target.id);
       console.log(LOG, 'пропуск (уже лайкнуто) id=', target.id);
@@ -536,18 +631,18 @@
       return false;
     }
 
-    // Короткое окно: ловим блокировку/тост «уже лайкнуто». Лайкнутые карточки и так
-    // отфильтрованы по SVG-пути, поэтому при отсутствии сигнала считаем лайк успешным
-    // (trusted-клик надёжен) — без зависимости от inject.js и долгого ожидания сети.
+    // Short window to catch blocking or the "already liked" toast. Absent a
+    // signal the like counts as successful: the trusted click is reliable,
+    // liked cards are pre-filtered by SVG path, and inject.js often fails to
+    // load under Pure's CSP — network confirmation can't be depended on.
     const outcome = await waitLikeOutcome(target.btn, t0, 500);
-    if (outcome === 'blocked') return false; // авто-пауза уже сработала
+    if (outcome === 'blocked') return false; // auto-pause already triggered
 
     if (outcome === 'already' || outcome === 'rejected') {
       markLiked(target.id);
       console.log(LOG, 'уже лайкнуто/отклонено, пропускаю id=', target.id, '(', outcome, ')');
       return true;
     }
-    // liked-new ИЛИ uncertain — считаем успехом.
     markLiked(target.id);
     bumpCounters();
     console.log(LOG, 'лайк id=', target.id, '(', outcome, ') сессия=', state.counters.session, 'сегодня=', state.counters.today);
@@ -558,7 +653,9 @@
     if (state.counters.day !== todayStr()) { state.counters.day = todayStr(); state.counters.today = 0; }
     state.counters.session++;
     state.counters.today++;
+    state.counters.total++;
     persistCounters();
+    updateBadge();
   }
 
   function capReached() {
@@ -568,17 +665,16 @@
     return state.counters.today >= cap;
   }
 
-  // Короткая подпись текущего фильтра для индикатора «режим».
   function modeLabel() {
-    const d = state.cfg.distance;
+    let d = state.cfg.distance;
+    if (d === 'custom') d = (state.cfg.customCity || '').trim() || 'keep';
     return (d && d !== 'keep') ? d : 'текущий';
   }
 
-  // ---------- Один проход по ленте ----------
   async function runPass(myGen) {
     state.currentMode = modeLabel();
 
-    // Дать ленте прогрузиться (особенно сразу после смены фильтра).
+    // Let the feed load, especially right after a filter change.
     state.statusText = 'ищу анкеты…';
     for (let i = 0; i < 12 && engineAlive(myGen); i++) {
       if (findLikeTargets().length > 0) break;
@@ -587,32 +683,30 @@
     console.log(LOG, 'старт прохода |', feedDiag());
 
     let stuck = 0;
-    const STUCK_LIMIT = 60; // ~1 мин безрезультатного поиска, прежде чем отдать ход другому режиму
+    const STUCK_LIMIT = 60;
     while (engineAlive(myGen)) {
       if (captchaVisible()) { autoPause('обнаружена капча'); break; }
       if (capReached()) { state.statusText = 'достигнут дневной лимит'; state.running = false; break; }
 
       const targets = findLikeTargets();
       if (targets.length === 0) {
-        // Нет нелайков в кадре — мотаем дальше и догружаем ленту.
         const progressed = await advanceFeed(stuck >= 3);
         if (progressed) {
           stuck = 0;
-          // Рейт-лимит: не мотаем ленту слишком часто (по огромным пачкам лайкнутых).
           const sMin = Math.max(0, Number(state.cfg.scrollPauseMin) || 0);
           const sMax = Math.max(sMin, Number(state.cfg.scrollPauseMax) || sMin);
           state.statusText = 'мотаю ленту…';
           await sleep(rand(sMin, sMax));
           continue;
         }
-        // Прогресса нет: коротко ждём и СНОВА сканируем — так ловим и ручной скролл
-        // пользователя, и запоздалую подгрузку. Никогда не уходим в «глухой» простой.
+        // No progress: keep rescanning on a short interval — this also picks up
+        // the user's manual scrolling and late lazy loads.
         stuck++;
         state.statusText = 'ищу новые анкеты…';
         await sleep(1000);
         if (stuck >= STUCK_LIMIT) {
           console.log(LOG, 'лента не растёт ~1мин, перезаход |', feedDiag());
-          break; // в runEngine — перезайдёт; движок продолжит работать
+          break; // runEngine re-enters; the engine keeps running
         }
         continue;
       }
@@ -628,8 +722,7 @@
       }
       if (!engineAlive(myGen)) break;
 
-      // Пауза между лайками + редкая длинная пауза.
-      // Санитизируем: числа, не отрицательные, min<=max (иначе sleep мог бы получить NaN/0).
+      // Sanitize: numbers, non-negative, min<=max (sleep must not get NaN).
       let minD = Math.max(0, Number(state.cfg.minDelay) || 0);
       let maxD = Math.max(minD, Number(state.cfg.maxDelay) || minD);
       let delay = rand(minD, maxD);
@@ -645,23 +738,23 @@
     }
   }
 
-  // ---------- Главный запуск ----------
   function engineAlive(myGen) { return state.running && !state.paused && state.gen === myGen; }
 
   async function runEngine() {
-    const myGen = ++state.gen;   // любой прошлый/зомби-цикл с этого момента невалиден
+    const myGen = ++state.gen;
     state.running = true;
     state.paused = false;
     state.lastError = null;
     state.counters.session = 0;
+    state.startedAt = Date.now();
     state.statusText = 'запуск…';
+    updateBadge();
     console.log(LOG, 'движок запущен, gen=', myGen, '|', feedDiag());
 
-    // Фильтр дистанции выставляем один раз за запуск, а не в каждом проходе.
     await applyFilters();
 
-    // Никогда не останавливаемся сами: проход за проходом. Когда лента исчерпана —
-    // короткая пауза и заходим снова (могут появиться новые анкеты).
+    // Never stops on its own: when the feed is exhausted, take a short breath
+    // and re-enter — new profiles may appear.
     let idleCycles = 0;
     while (engineAlive(myGen)) {
       const before = state.counters.session;
@@ -671,37 +764,40 @@
       if (state.counters.session === before) {
         idleCycles++;
         console.log(LOG, 'проход без новых лайков, перезаход, idle=', idleCycles);
-        await sleep(1000); // короткий вдох; поиск/скролл продолжается внутри runPass
+        await sleep(1000);
       } else {
         idleCycles = 0;
       }
     }
 
-    if (state.gen === myGen) {   // чистит состояние только последний запуск
+    if (state.gen === myGen) {   // only the latest run may clean up shared state
       state.running = false;
       state.currentMode = null;
       detachDebugger();
+      updateBadge();
       console.log(LOG, 'движок остановлен. Итого за сессию:', state.counters.session);
     }
   }
 
-  // ---------- Хранилище ----------
   function loadCfg() {
     return new Promise((resolve) => {
       chrome.storage.local.get(['cfg', 'counters', 'likedMap', 'likedIds'], (data) => {
         state.cfg = Object.assign({}, DEFAULTS, data.cfg || {});
-        if (data.counters && data.counters.day === todayStr()) {
-          state.counters.today = data.counters.today || 0;
-          state.counters.day = data.counters.day;
+        if (data.counters) {
+          state.counters.total = data.counters.total || 0;   // all-time, never reset
+          if (data.counters.day === todayStr()) {
+            state.counters.today = data.counters.today || 0;
+            state.counters.day = data.counters.day;
+          }
         }
         const now = Date.now();
         if (data.likedMap && typeof data.likedMap === 'object') {
           for (const id in data.likedMap) {
             const ts = data.likedMap[id];
-            if (ts && (now - ts) < LIKE_TTL_MS) state.liked.set(id, ts); // протухшие (>24ч) не грузим
+            if (ts && (now - ts) < LIKE_TTL_MS) state.liked.set(id, ts);
           }
         } else if (Array.isArray(data.likedIds)) {
-          // миграция со старого формата без таймстампов: считаем их свежими
+          // migration from the old timestamp-less format: treat as fresh
           for (const id of data.likedIds) state.liked.set(id, now);
         }
         resolve();
@@ -709,10 +805,9 @@
     });
   }
   function persistCounters() {
-    chrome.storage.local.set({ counters: { today: state.counters.today, day: state.counters.day } });
+    chrome.storage.local.set({ counters: { today: state.counters.today, day: state.counters.day, total: state.counters.total } });
   }
 
-  // ---------- Связь с попапом ----------
   function statusPayload() {
     return {
       running: state.running,
@@ -721,6 +816,9 @@
       currentMode: state.currentMode,
       session: state.counters.session,
       today: state.counters.today,
+      total: state.counters.total,
+      startedAt: state.startedAt,
+      filterNote: state.filterNote,
       lastError: state.lastError,
       onFeed: !!document.querySelector(SEL.feedListSelector)
     };
@@ -731,16 +829,17 @@
     if (msg.cmd === 'start') {
       loadCfg().then(() => {
         if (msg.cfg) { state.cfg = Object.assign({}, DEFAULTS, msg.cfg); chrome.storage.local.set({ cfg: state.cfg }); }
-        runEngine(); // всегда свежий запуск; прошлый/зомби-цикл инвалидируется по gen
+        runEngine(); // always a fresh run; any older loop is invalidated via gen
         sendResponse(statusPayload());
       });
       return true;
     }
     if (msg.cmd === 'stop') {
-      state.gen++;            // инвалидируем активный цикл — он выйдет на ближайшей проверке
+      state.gen++;            // invalidate the active loop — it exits at the next check
       state.running = false; state.paused = false;
       state.statusText = 'остановлен'; state.currentMode = null;
       detachDebugger();
+      updateBadge();
       sendResponse(statusPayload());
       return;
     }

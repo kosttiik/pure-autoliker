@@ -1,8 +1,7 @@
 /*
- * Работает в КОНТЕКСТЕ СТРАНИЦЫ (не isolated world).
- * Оборачивает window.fetch, чтобы ловить ответ на запрос лайка и сигналить
- * контент-скрипту через window.postMessage. Также сообщает об ошибках/капче
- * (403/429), чтобы движок мог авто-паузу сделать.
+ * Runs in the PAGE context (not the isolated world). Wraps window.fetch to
+ * report like-request results to the content script via window.postMessage,
+ * including block/captcha responses (403/429) for auto-pause.
  */
 (function () {
   if (window.__PURE_FETCH_PATCHED) return;
