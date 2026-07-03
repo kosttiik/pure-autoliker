@@ -1,5 +1,30 @@
 /* Pure Auto-Liker — popup: settings, speed presets, start/stop, status polling. */
 (function () {
+  const I = window.__PURE_I18N;
+
+  // English is the default markup language; translations are applied only from
+  // the dictionary, so unknown keys keep the markup text.
+  function applyI18n() {
+    document.documentElement.lang = I.lang;
+    document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = I.t(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = I.t(el.dataset.i18nHtml); });
+    document.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = I.t(el.dataset.i18nPh); });
+    document.querySelectorAll('[data-i18n-label]').forEach((el) => { el.label = I.t(el.dataset.i18nLabel); });
+    // City options display the same label the site uses.
+    document.querySelectorAll('[data-i18n-loc]').forEach((el) => { el.textContent = I.locationLabel(el.dataset.i18nLoc); });
+  }
+  applyI18n();
+
+  // cfg.distance from v2.0 stored raw Russian site labels — map them to the
+  // neutral keys introduced with i18n.
+  const LEGACY_DISTANCE = {
+    'Рядом': 'dist_near', 'Соседи': 'dist_neighbors', 'Неподалёку': 'dist_notfar',
+    'На горизонте': 'dist_horizon', 'Далеко, но близко': 'dist_far', 'Вся вселенная': 'dist_universe',
+    'Москва': 'city_moscow', 'Санкт-Петербург': 'city_spb', 'Лондон': 'city_london',
+    'Нью-Йорк': 'city_ny', 'Париж': 'city_paris', 'Лос-Анджелес': 'city_la',
+    'Берлин': 'city_berlin', 'Дубай': 'city_dubai', 'Стамбул': 'city_istanbul', 'Сингапур': 'city_singapore'
+  };
+
   const DEFAULTS = {
     minDelay: 800, maxDelay: 1200, longPauseEvery: 40,
     distance: 'keep', customCity: '', autoFilters: true, dryRun: false, dailyCap: 0,
@@ -37,7 +62,7 @@
     $('longPauseEvery').value = cfg.longPauseEvery;
     $('dailyCap').value = cfg.dailyCap;
     $('distance').value = cfg.distance;
-    if (!$('distance').value) $('distance').value = 'keep'; // stored value missing from the list
+    if (!$('distance').value) $('distance').value = LEGACY_DISTANCE[cfg.distance] || 'keep';
     $('customCity').value = cfg.customCity || '';
     $('autoFilters').checked = !!cfg.autoFilters;
     $('dryRun').checked = !!cfg.dryRun;
@@ -101,7 +126,7 @@
 
   function renderNoTab() {
     $('dot').className = 'dot';
-    $('statusText').textContent = 'Открой ленту pure.app';
+    $('statusText').textContent = I.t('open_feed');
   }
 
   function setNum(id, val) {
@@ -118,7 +143,7 @@
     if (!st) return;
     const dot = $('dot');
     dot.className = 'dot' + (st.paused ? ' pause' : st.running ? ' run' : st.lastError ? ' err' : '');
-    $('statusText').textContent = st.statusText || (st.running ? 'работает' : 'остановлен');
+    $('statusText').textContent = st.statusText || I.t(st.running ? 'status_running' : 'status_stopped');
     setNum('cSession', st.session || 0);
     setNum('cToday', st.today || 0);
     setNum('cTotal', st.total || 0);
@@ -142,10 +167,10 @@
     else err.hidden = true;
 
     const note = $('filterNote');
-    if (st.filterNote) {
+    if (st.filterNote && st.filterNote.text) {
       note.hidden = false;
-      note.textContent = '📍 ' + st.filterNote;
-      note.classList.toggle('warn', /не найден|не подтвердилась|не открылся|вручную/.test(st.filterNote));
+      note.textContent = '📍 ' + st.filterNote.text;
+      note.classList.toggle('warn', !st.filterNote.ok);
     } else note.hidden = true;
   }
 

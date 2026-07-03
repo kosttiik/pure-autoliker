@@ -4,6 +4,7 @@
  */
 (function () {
   const SEL = (window.__PURE && window.__PURE.SEL) || {};
+  const I18N = window.__PURE_I18N || { lang: 'en', t: (k) => k, locationLabel: (k) => k };
   const LOG = '[PureLiker]';
 
   // Content scripts can't observe page fetch — inject an interceptor into the page context.
@@ -22,7 +23,7 @@
     longPauseEvery: 40,
     longPauseMinMs: 60000,
     longPauseMaxMs: 120000,
-    distance: 'keep',          // 'keep' (don't touch), a chip label ('Рядом', 'Москва'…) or 'custom'
+    distance: 'keep',          // 'keep', a neutral key (dist_*/city_*), 'custom', or a legacy raw label
     customCity: '',            // used when distance === 'custom'
     autoFilters: true,
     dryRun: false,
@@ -36,14 +37,14 @@
     running: false,
     paused: false,
     gen: 0,                    // run generation: a new Start invalidates any older loop
-    statusText: 'остановлен',
+    statusText: I18N.t('status_stopped'),
     currentMode: null,
     liked: new Map(),          // id -> like timestamp (epoch ms)
     lastLike: null,            // {ts, ok, blocked, status} from inject.js
     cfg: Object.assign({}, DEFAULTS),
     counters: { session: 0, today: 0, total: 0, day: todayStr() },
     startedAt: null,
-    filterNote: null,          // human-readable outcome of the location filter attempt
+    filterNote: null,          // {ok, text} — outcome of the location filter attempt
     lastError: null
   };
 
@@ -93,7 +94,7 @@
     if (d.type === 'PURE_LIKE_RESULT') {
       state.lastLike = { ts: Date.now(), ok: !!d.ok, blocked: !!d.blocked, status: d.status };
       if (d.blocked) {
-        state.lastError = 'Похоже на блокировку/капчу (HTTP ' + d.status + ')';
+        state.lastError = I18N.t('err_blocked', { status: d.status });
         autoPause(state.lastError);
       }
     }
@@ -101,15 +102,31 @@
 
   // The DOM does not reflect like state; the only "already liked" signal is a
   // toast shown on a repeated click — watch for it via MutationObserver.
+  // Matched by text phrases AND by the toast bubble's SVG path (language-
+  // independent). Any toast this close to a like click means "already liked",
+  // and waitLikeOutcome only reads the timestamp within its 500ms window.
   let lastAlreadyToastTs = 0;
+  function nodeLooksLikeToast(node) {
+    const pref = SEL.toastBlobPathPrefix;
+    if (!pref || !node.querySelectorAll) return false;
+    for (const p of node.querySelectorAll('svg path')) {
+      const d = (p.getAttribute('d') || '').trim();
+      if (d.indexOf(pref) === 0) return true;
+    }
+    return false;
+  }
   function startToastObserver() {
-    const phrase = (SEL.text && SEL.text.alreadyLiked) || 'Лайк уже был';
+    const phrases = (SEL.text && SEL.text.alreadyLikedPhrases) || ['Лайк уже был'];
     try {
       const obs = new MutationObserver((muts) => {
         for (const m of muts) {
           for (const node of m.addedNodes) {
             if (node.nodeType !== 1) continue;
-            if ((node.textContent || '').indexOf(phrase) !== -1) { lastAlreadyToastTs = Date.now(); return; }
+            if (nodeLooksLikeToast(node)) { lastAlreadyToastTs = Date.now(); return; }
+            const txt = node.textContent || '';
+            for (const ph of phrases) {
+              if (txt.indexOf(ph) !== -1) { lastAlreadyToastTs = Date.now(); return; }
+            }
           }
         }
       });
@@ -127,7 +144,7 @@
       try {
         chrome.runtime.sendMessage({ cmd: 'trustedClick', x, y }, (resp) => {
           if (chrome.runtime.lastError) { resolve({ ok: false, error: chrome.runtime.lastError.message }); return; }
-          resolve(resp || { ok: false, error: 'нет ответа фонового воркера' });
+          resolve(resp || { ok: false, error: I18N.t('err_noresp') });
         });
       } catch (e) { resolve({ ok: false, error: String(e) }); }
     });
@@ -179,7 +196,7 @@
   }
 
   async function clickTrusted(el) {
-    if (!el) return { ok: false, error: 'нет элемента' };
+    if (!el) return { ok: false, error: I18N.t('err_noelem') };
     // Scroll only when off-screen — coordinates are taken right before the CDP click.
     if (!isInViewport(el)) {
       try { el.scrollIntoView({ block: 'center', behavior: 'auto' }); } catch (e) {}
@@ -197,9 +214,9 @@
       if (b.querySelector('svg path')) withSvg++;
       if (isLikeButton(b)) likeable++; else if (isLikedHeart(b)) liked++;
     }
-    return 'контейнер=' + (list ? 'есть' : 'НЕТ→body') +
-           ' кнопок=' + btns.length + ' c-svg=' + withSvg +
-           ' нелайкнутых-сердец=' + likeable + ' лайкнутых=' + liked;
+    return 'container=' + (list ? 'yes' : 'NO→body') +
+           ' buttons=' + btns.length + ' with-svg=' + withSvg +
+           ' unliked-hearts=' + likeable + ' liked=' + liked;
   }
 
   function captchaVisible() {
@@ -212,7 +229,7 @@
   function autoPause(reason) {
     state.paused = true;
     state.running = false;
-    state.statusText = 'ПАУЗА: ' + reason;
+    state.statusText = I18N.t('status_pause_prefix') + reason;
     console.warn(LOG, 'auto-pause:', reason);
   }
 
@@ -417,10 +434,26 @@
     return findChipByLabels(SEL.text.locationLabels || []) || chips[0] || null;
   }
 
-  // Root of the open filter popup. Options must be searched ONLY inside it:
+  // Root of the open location panel. Options must be searched ONLY inside it:
   // after a filter change the option text may also appear in the feed, and a
   // page-wide match would send the click into a profile card.
+  // The panel is NOT mounted in a portal root, and its classes are hashed, so
+  // the anchor is structural: the panel always carries a search input — climb
+  // from it to the container that also holds the options list.
   function popupRoot() {
+    const inputs = document.querySelectorAll('input[type="search"], input[type="text"], input:not([type])');
+    for (const inp of inputs) {
+      if (!inp.offsetParent) continue; // hidden
+      let el = inp;
+      for (let i = 0; i < 5 && el.parentElement && el.parentElement !== document.body; i++) {
+        el = el.parentElement;
+        if (el.querySelector(SEL.feedListSelector)) break; // climbed out of the panel
+        for (const child of el.children) {
+          if (child.contains(inp)) continue;
+          if ((child.textContent || '').trim() && child.children.length > 0) return el;
+        }
+      }
+    }
     for (const s of (SEL.portalRoots || [])) {
       const el = document.querySelector(s);
       if (el && el.childElementCount > 0 && (el.textContent || '').trim()) return el;
@@ -488,19 +521,25 @@
     return false;
   }
 
-  // Close via Escape only — an "outside" click at screen center could land on a
-  // feed card and open a profile.
+  // Close via Escape, then the panel's back button — never an "outside" click:
+  // screen center could land on a feed card and open a profile.
   async function closePopups() {
     if (!popupIsOpen()) return;
     await trustedKey('Escape');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    for (let i = 0; i < 15 && popupIsOpen(); i++) await sleep(120);
+    for (let i = 0; i < 5 && popupIsOpen(); i++) await sleep(120);
+    if (popupIsOpen()) {
+      const root = popupRoot();
+      const back = root && root.querySelector('button');
+      if (back) await clickTrusted(back);
+      for (let i = 0; i < 10 && popupIsOpen(); i++) await sleep(120);
+    }
   }
 
   async function openChipMenu(chip, what) {
     await closePopups();
     await clickTrusted(chip);
-    if (!(await waitForOptions(3000))) { console.warn(LOG, 'попап «' + what + '» не открылся'); return false; }
+    if (!(await waitForOptions(3000))) { console.warn(LOG, what + ' popup did not open'); return false; }
     await sleep(rand(220, 420));
     return true;
   }
@@ -511,17 +550,17 @@
   async function setLocationFilter(label) {
     const chip = findLocationChip();
     if (!chip) {
-      state.filterNote = 'чип локации не найден — выставь на сайте вручную';
-      console.warn(LOG, state.filterNote);
+      state.filterNote = { ok: false, text: I18N.t('note_nochip') };
+      console.warn(LOG, state.filterNote.text);
       return false;
     }
     if ((chip.textContent || '').indexOf(label) !== -1) {
-      state.filterNote = 'локация: ' + label;
+      state.filterNote = { ok: true, text: I18N.t('note_location', { label }) };
       return true;
     }
-    state.statusText = 'ставлю локацию: ' + label;
-    if (!(await openChipMenu(chip, 'локация'))) {
-      state.filterNote = 'попап локации не открылся';
+    state.statusText = I18N.t('status_set_location', { label });
+    if (!(await openChipMenu(chip, 'location'))) {
+      state.filterNote = { ok: false, text: I18N.t('note_nopopup') };
       return false;
     }
 
@@ -537,8 +576,8 @@
       }
     }
     if (!opt) {
-      state.filterNote = 'вариант «' + label + '» не найден в попапе';
-      console.warn(LOG, state.filterNote);
+      state.filterNote = { ok: false, text: I18N.t('note_nooption', { label }) };
+      console.warn(LOG, state.filterNote.text);
       await closePopups();
       return false;
     }
@@ -551,9 +590,9 @@
     const now = findLocationChip();
     const ok = !!now && (now.textContent || '').indexOf(label) !== -1;
     state.filterNote = ok
-      ? 'локация: ' + label
-      : 'локация не подтвердилась, на чипе: «' + (((now && now.textContent) || '?').trim()) + '»';
-    console.log(LOG, state.filterNote);
+      ? { ok: true, text: I18N.t('note_location', { label }) }
+      : { ok: false, text: I18N.t('note_unconfirmed', { text: (((now && now.textContent) || '?').trim()) }) };
+    console.log(LOG, state.filterNote.text);
     return ok;
   }
 
@@ -563,6 +602,9 @@
     try {
       let want = state.cfg.distance;
       if (want === 'custom') want = (state.cfg.customCity || '').trim();
+      // Neutral keys map to the site's locale-specific label; legacy configs
+      // with raw labels pass through locationLabel() unchanged.
+      else if (want && want !== 'keep') want = I18N.locationLabel(want);
       if (want && want !== 'keep') await setLocationFilter(want);
     } catch (e) { console.warn(LOG, 'applyFilters error', e); }
     return true;
@@ -609,14 +651,14 @@
     if (state.cfg.dryRun) {
       highlight(target.root, target.btn);
       state.liked.set(target.id, Date.now()); // session-only, not persisted
-      console.log(LOG, '[DRY-RUN] сердечко id=', target.id, heartDiag(target.btn));
+      console.log(LOG, '[DRY-RUN] heart id=', target.id, heartDiag(target.btn));
       return true;
     }
 
     // Race guard: skip without clicking if the card got liked meanwhile.
     if (likedRecently(target.id) || isLikedHeart(target.btn) || !isLikeButton(target.btn)) {
       markLiked(target.id);
-      console.log(LOG, 'пропуск (уже лайкнуто) id=', target.id);
+      console.log(LOG, 'skip (already liked) id=', target.id);
       return true;
     }
 
@@ -624,8 +666,7 @@
     const t0 = Date.now();
     const click = await trustedClickAt(target.btn);
     if (!click || !click.ok) {
-      const reason = 'не удалось trusted-клик: ' + ((click && click.error) || '?') +
-        ' (не закрывай баннер отладки и DevTools на этой вкладке)';
+      const reason = I18N.t('err_click', { err: (click && click.error) || '?' });
       autoPause(reason);
       state.lastError = reason;
       return false;
@@ -640,12 +681,12 @@
 
     if (outcome === 'already' || outcome === 'rejected') {
       markLiked(target.id);
-      console.log(LOG, 'уже лайкнуто/отклонено, пропускаю id=', target.id, '(', outcome, ')');
+      console.log(LOG, 'already liked/rejected, skipping id=', target.id, '(', outcome, ')');
       return true;
     }
     markLiked(target.id);
     bumpCounters();
-    console.log(LOG, 'лайк id=', target.id, '(', outcome, ') сессия=', state.counters.session, 'сегодня=', state.counters.today);
+    console.log(LOG, 'liked id=', target.id, '(', outcome, ') session=', state.counters.session, 'today=', state.counters.today);
     return true;
   }
 
@@ -666,27 +707,28 @@
   }
 
   function modeLabel() {
-    let d = state.cfg.distance;
-    if (d === 'custom') d = (state.cfg.customCity || '').trim() || 'keep';
-    return (d && d !== 'keep') ? d : 'текущий';
+    const d = state.cfg.distance;
+    if (d === 'custom') return (state.cfg.customCity || '').trim() || I18N.t('mode_current');
+    if (d && d !== 'keep') return I18N.locationLabel(d);
+    return I18N.t('mode_current');
   }
 
   async function runPass(myGen) {
     state.currentMode = modeLabel();
 
     // Let the feed load, especially right after a filter change.
-    state.statusText = 'ищу анкеты…';
+    state.statusText = I18N.t('status_search');
     for (let i = 0; i < 12 && engineAlive(myGen); i++) {
       if (findLikeTargets().length > 0) break;
       await sleep(400);
     }
-    console.log(LOG, 'старт прохода |', feedDiag());
+    console.log(LOG, 'pass started |', feedDiag());
 
     let stuck = 0;
     const STUCK_LIMIT = 60;
     while (engineAlive(myGen)) {
-      if (captchaVisible()) { autoPause('обнаружена капча'); break; }
-      if (capReached()) { state.statusText = 'достигнут дневной лимит'; state.running = false; break; }
+      if (captchaVisible()) { autoPause(I18N.t('err_captcha')); break; }
+      if (capReached()) { state.statusText = I18N.t('status_cap'); state.running = false; break; }
 
       const targets = findLikeTargets();
       if (targets.length === 0) {
@@ -695,17 +737,17 @@
           stuck = 0;
           const sMin = Math.max(0, Number(state.cfg.scrollPauseMin) || 0);
           const sMax = Math.max(sMin, Number(state.cfg.scrollPauseMax) || sMin);
-          state.statusText = 'мотаю ленту…';
+          state.statusText = I18N.t('status_scroll');
           await sleep(rand(sMin, sMax));
           continue;
         }
         // No progress: keep rescanning on a short interval — this also picks up
         // the user's manual scrolling and late lazy loads.
         stuck++;
-        state.statusText = 'ищу новые анкеты…';
+        state.statusText = I18N.t('status_search_new');
         await sleep(1000);
         if (stuck >= STUCK_LIMIT) {
-          console.log(LOG, 'лента не растёт ~1мин, перезаход |', feedDiag());
+          console.log(LOG, 'feed not growing for ~1min, re-entering |', feedDiag());
           break; // runEngine re-enters; the engine keeps running
         }
         continue;
@@ -713,11 +755,11 @@
       stuck = 0;
 
       const t = targets[0];
-      state.statusText = 'лайкаю…';
+      state.statusText = I18N.t('status_like');
       try {
         await likeOne(t);
       } catch (e) {
-        console.warn(LOG, 'ошибка лайка', e);
+        console.warn(LOG, 'like error', e);
         markLiked(t.id);
       }
       if (!engineAlive(myGen)) break;
@@ -729,10 +771,10 @@
       if (state.cfg.longPauseEvery > 0 && state.counters.session > 0 &&
           state.counters.session % state.cfg.longPauseEvery === 0) {
         delay = rand(state.cfg.longPauseMinMs, state.cfg.longPauseMaxMs);
-        state.statusText = 'длинная пауза…';
-        console.log(LOG, 'длинная пауза', Math.round(delay / 1000), 'с');
+        state.statusText = I18N.t('status_longpause');
+        console.log(LOG, 'long pause', Math.round(delay / 1000), 's');
       } else {
-        console.log(LOG, 'пауза', Math.round(delay), 'мс (min=', minD, 'max=', maxD, ')');
+        console.log(LOG, 'pause', Math.round(delay), 'ms (min=', minD, 'max=', maxD, ')');
       }
       await sleep(delay);
     }
@@ -747,9 +789,9 @@
     state.lastError = null;
     state.counters.session = 0;
     state.startedAt = Date.now();
-    state.statusText = 'запуск…';
+    state.statusText = I18N.t('status_starting');
     updateBadge();
-    console.log(LOG, 'движок запущен, gen=', myGen, '|', feedDiag());
+    console.log(LOG, 'engine started, gen=', myGen, '|', feedDiag());
 
     await applyFilters();
 
@@ -763,7 +805,7 @@
 
       if (state.counters.session === before) {
         idleCycles++;
-        console.log(LOG, 'проход без новых лайков, перезаход, idle=', idleCycles);
+        console.log(LOG, 'pass with no new likes, re-entering, idle=', idleCycles);
         await sleep(1000);
       } else {
         idleCycles = 0;
@@ -775,7 +817,7 @@
       state.currentMode = null;
       detachDebugger();
       updateBadge();
-      console.log(LOG, 'движок остановлен. Итого за сессию:', state.counters.session);
+      console.log(LOG, 'engine stopped. Session total:', state.counters.session);
     }
   }
 
@@ -837,7 +879,7 @@
     if (msg.cmd === 'stop') {
       state.gen++;            // invalidate the active loop — it exits at the next check
       state.running = false; state.paused = false;
-      state.statusText = 'остановлен'; state.currentMode = null;
+      state.statusText = I18N.t('status_stopped'); state.currentMode = null;
       detachDebugger();
       updateBadge();
       sendResponse(statusPayload());
@@ -854,5 +896,5 @@
 
   loadCfg();
   startToastObserver();
-  console.log(LOG, 'контент-скрипт загружен на', location.href);
+  console.log(LOG, 'content script loaded on', location.href);
 })();

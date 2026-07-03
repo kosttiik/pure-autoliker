@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="popup.css">
@@ -19,7 +19,7 @@
       </div>
       <div class="title">
         <h1>Pure Auto-Liker</h1>
-        <p>умные авто-лайки</p>
+        <p data-i18n="subtitle">smart auto-likes</p>
       </div>
       <div class="statuspill">
         <span class="dot" id="dot"></span>
@@ -30,14 +30,14 @@
 
     <main>
       <section class="counters reveal" style="--d:1">
-        <div class="cnt"><b id="cSession">0</b><span>за сессию</span></div>
-        <div class="cnt"><b id="cToday">0</b><span>сегодня</span></div>
-        <div class="cnt"><b id="cTotal">0</b><span>всего</span></div>
+        <div class="cnt"><b id="cSession">0</b><span data-i18n="cnt_session">session</span></div>
+        <div class="cnt"><b id="cToday">0</b><span data-i18n="cnt_today">today</span></div>
+        <div class="cnt"><b id="cTotal">0</b><span data-i18n="cnt_total">total</span></div>
       </section>
 
       <div class="chips reveal" style="--d:1">
         <span class="chip" id="modeChip" hidden>📍 <b id="cMode"></b></span>
-        <span class="chip" id="rateChip" hidden>⚡ <b id="cRate"></b>/час</span>
+        <span class="chip" id="rateChip" hidden>⚡ <b id="cRate"></b><span data-i18n="rate_suffix">/hour</span></span>
       </div>
 
       <div class="banner err" id="err" hidden></div>
@@ -47,94 +47,95 @@
         <button id="startBtn" class="btn primary">
           <span class="sheen" aria-hidden="true"></span>
           <svg viewBox="0 0 24 24" width="15" height="15"><path d="M7 5v14l11-7z" fill="currentColor"/></svg>
-          <span class="btn-label">Старт</span>
+          <span class="btn-label" data-i18n="btn_start">Start</span>
         </button>
         <button id="stopBtn" class="btn ghost">
           <svg viewBox="0 0 24 24" width="13" height="13"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
-          <span>Стоп</span>
+          <span data-i18n="btn_stop">Stop</span>
         </button>
       </div>
 
       <section class="card reveal" style="--d:3">
-        <h2>📍 Локация</h2>
+        <h2 data-i18n="sec_location">📍 Location</h2>
         <label class="field">
           <select id="distance">
-            <option value="keep">Не менять — как выбрано на сайте</option>
-            <optgroup label="Дистанция">
-              <option value="Рядом">Рядом · &lt;5 км</option>
-              <option value="Соседи">Соседи · 10 км</option>
-              <option value="Неподалёку">Неподалёку · 30 км</option>
-              <option value="На горизонте">На горизонте · 50 км</option>
-              <option value="Далеко, но близко">Далеко, но близко · 100 км</option>
-              <option value="Вся вселенная">Вся вселенная · &gt;100 км</option>
+            <option value="keep" data-i18n="loc_keep">Keep — as set on the site</option>
+            <optgroup label="Distance" data-i18n-label="grp_distance">
+              <option value="dist_near" data-i18n="opt_dist_near">Nearby · &lt;5 km</option>
+              <option value="dist_neighbors" data-i18n="opt_dist_neighbors">Neighbors · 10 km</option>
+              <option value="dist_notfar" data-i18n="opt_dist_notfar">Not far · 30 km</option>
+              <option value="dist_horizon" data-i18n="opt_dist_horizon">On the horizon · 50 km</option>
+              <option value="dist_far" data-i18n="opt_dist_far">Far, but close · 100 km</option>
+              <option value="dist_universe" data-i18n="opt_dist_universe">The whole universe · &gt;100 km</option>
             </optgroup>
-            <optgroup label="Города">
-              <option value="Москва">Москва</option>
-              <option value="Санкт-Петербург">Санкт-Петербург</option>
-              <option value="Лондон">Лондон</option>
-              <option value="Нью-Йорк">Нью-Йорк</option>
-              <option value="Париж">Париж</option>
-              <option value="Лос-Анджелес">Лос-Анджелес</option>
-              <option value="Берлин">Берлин</option>
-              <option value="Дубай">Дубай</option>
-              <option value="Стамбул">Стамбул</option>
-              <option value="Сингапур">Сингапур</option>
+            <optgroup label="Cities" data-i18n-label="grp_cities">
+              <option value="city_moscow" data-i18n-loc="city_moscow">Moscow</option>
+              <option value="city_spb" data-i18n-loc="city_spb">Saint Petersburg</option>
+              <option value="city_london" data-i18n-loc="city_london">London</option>
+              <option value="city_ny" data-i18n-loc="city_ny">New York</option>
+              <option value="city_paris" data-i18n-loc="city_paris">Paris</option>
+              <option value="city_la" data-i18n-loc="city_la">Los Angeles</option>
+              <option value="city_berlin" data-i18n-loc="city_berlin">Berlin</option>
+              <option value="city_dubai" data-i18n-loc="city_dubai">Dubai</option>
+              <option value="city_istanbul" data-i18n-loc="city_istanbul">Istanbul</option>
+              <option value="city_singapore" data-i18n-loc="city_singapore">Singapore</option>
             </optgroup>
-            <option value="custom">✏️ Другой город…</option>
+            <option value="custom" data-i18n="loc_custom">✏️ Other city…</option>
           </select>
         </label>
         <label class="field slidein" id="customCityRow" hidden>
-          <span>Название города</span>
-          <input type="text" id="customCity" placeholder="например, Тбилиси" autocomplete="off">
-          <small>Найду его через поиск в попапе локации на сайте</small>
+          <span data-i18n="city_label">City name</span>
+          <input type="text" id="customCity" placeholder="e.g., Tbilisi" data-i18n-ph="city_ph" autocomplete="off">
+          <small data-i18n="city_hint">It will be found via the location popup search on the site</small>
         </label>
         <div class="toggle-row">
-          <span>Авто-выставлять фильтр <small>иначе берём текущий на сайте</small></span>
+          <span data-i18n-html="autofilters_row">Auto-apply filter <small>otherwise the current one on the site is used</small></span>
           <label class="switch"><input type="checkbox" id="autoFilters"><i></i></label>
         </div>
       </section>
 
       <section class="card reveal" style="--d:4">
-        <h2>🚀 Темп</h2>
+        <h2 data-i18n="sec_speed">🚀 Speed</h2>
         <div class="presets" id="presets">
-          <button type="button" class="preset" data-preset="calm"><i>🐢</i><b>Спокойный</b><small>1.5–3 c</small></button>
-          <button type="button" class="preset" data-preset="normal"><i>⚖️</i><b>Обычный</b><small>0.8–1.2 c</small></button>
-          <button type="button" class="preset" data-preset="turbo"><i>🚀</i><b>Турбо</b><small>0.35–0.7 c</small></button>
+          <button type="button" class="preset" data-preset="calm"><i>🐢</i><b data-i18n="preset_calm">Calm</b><small data-i18n="preset_calm_s">1.5–3 s</small></button>
+          <button type="button" class="preset" data-preset="normal"><i>⚖️</i><b data-i18n="preset_normal">Normal</b><small data-i18n="preset_normal_s">0.8–1.2 s</small></button>
+          <button type="button" class="preset" data-preset="turbo"><i>🚀</i><b data-i18n="preset_turbo">Turbo</b><small data-i18n="preset_turbo_s">0.35–0.7 s</small></button>
         </div>
         <details class="adv" id="advBox">
-          <summary>Точная настройка <i class="chev" aria-hidden="true"></i></summary>
+          <summary><span data-i18n="adv_summary">Fine tuning</span><i class="chev" aria-hidden="true"></i></summary>
           <div class="adv-body">
             <div class="grid2">
-              <label class="field"><span>Задержка мин, мс</span><input type="number" id="minDelay" min="0" step="100"></label>
-              <label class="field"><span>Задержка макс, мс</span><input type="number" id="maxDelay" min="0" step="100"></label>
+              <label class="field"><span data-i18n="f_min">Min delay, ms</span><input type="number" id="minDelay" min="0" step="100"></label>
+              <label class="field"><span data-i18n="f_max">Max delay, ms</span><input type="number" id="maxDelay" min="0" step="100"></label>
             </div>
             <div class="grid2">
-              <label class="field"><span>Длинная пауза каждые</span><input type="number" id="longPauseEvery" min="0" step="1"></label>
-              <label class="field"><span>Лимит/день <small>0 = нет</small></span><input type="number" id="dailyCap" min="0" step="10"></label>
+              <label class="field"><span data-i18n="f_longpause">Long pause every</span><input type="number" id="longPauseEvery" min="0" step="1"></label>
+              <label class="field"><span data-i18n-html="f_cap">Daily cap <small>0 = off</small></span><input type="number" id="dailyCap" min="0" step="10"></label>
             </div>
             <div class="grid2">
-              <label class="field"><span>Скролл-пауза мин, мс</span><input type="number" id="scrollPauseMin" min="0" step="100"></label>
-              <label class="field"><span>Скролл-пауза макс, мс</span><input type="number" id="scrollPauseMax" min="0" step="100"></label>
+              <label class="field"><span data-i18n="f_smin">Scroll pause min, ms</span><input type="number" id="scrollPauseMin" min="0" step="100"></label>
+              <label class="field"><span data-i18n="f_smax">Scroll pause max, ms</span><input type="number" id="scrollPauseMax" min="0" step="100"></label>
             </div>
           </div>
         </details>
         <div class="toggle-row">
-          <span>Dry-run <small>только подсветка, без кликов</small></span>
+          <span data-i18n-html="dryrun_row">Dry-run <small>highlight only, no clicks</small></span>
           <label class="switch"><input type="checkbox" id="dryRun"><i></i></label>
         </div>
       </section>
 
       <details class="hints reveal" style="--d:5">
-        <summary>💡 Как пользоваться <i class="chev" aria-hidden="true"></i></summary>
+        <summary><span data-i18n="hints_summary">💡 How to use</span><i class="chev" aria-hidden="true"></i></summary>
         <div class="hints-body">
-          <p>Открой ленту <b>pure.app</b> и жми <b>Старт</b>. Первый раз включи <b>Dry-run</b> — расширение подсветит сердечки, ничего не кликая.</p>
-          <p>Окно можно <b>закрыть</b> — лайки идут в фоне, счётчик виден на иконке. Сверху вкладки висит баннер <b>«…запустил отладку браузера»</b> — так и нужно: не закрывай его и не открывай DevTools на этой вкладке.</p>
+          <p data-i18n-html="hint1">Open the <b>pure.app</b> feed and hit <b>Start</b>. The first time, enable <b>Dry-run</b> — hearts get highlighted without any clicks.</p>
+          <p data-i18n-html="hint2">You can <b>close</b> this window — liking continues in the background, the counter shows on the icon. The tab shows a <b>“…started debugging this browser”</b> banner — that is expected: do not dismiss it and do not open DevTools on that tab.</p>
         </div>
       </details>
     </main>
   </div>
 
-  <div class="toast" id="toast">✓ Сохранено</div>
+  <div class="toast" id="toast" data-i18n="toast_saved">✓ Saved</div>
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

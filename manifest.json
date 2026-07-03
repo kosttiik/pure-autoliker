@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Pure Auto-Liker",
-  "version": "2.0.0",
-  "description": "Авто-лайки анкетам в ленте pure.app: пропуск уже лайкнутых, рейт-лимит, авто-выбор локации (включая произвольный город), пресеты темпа.",
+  "version": "2.1.1",
+  "description": "Auto-likes for the pure.app feed: skips already-liked profiles, rate limiting, auto location filter (including arbitrary cities), speed presets.",
   "permissions": ["storage", "activeTab", "debugger"],
   "host_permissions": ["https://pure.app/*"],
   "background": {
@@ -11,7 +11,7 @@
   "content_scripts": [
     {
       "matches": ["https://pure.app/app/*"],
-      "js": ["src/selectors.js", "src/content.js"],
+      "js": ["src/i18n.js", "src/selectors.js", "src/content.js"],
       "run_at": "document_idle"
     }
   ],
