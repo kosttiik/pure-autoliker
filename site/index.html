@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f4f1ec">
+<meta name="color-scheme" content="light">
+
+<title>Pure Auto-Liker — auto-likes for the Pure app · автолайки для Pure</title>
+<meta name="description" content="Pure Auto-Liker — free open-source browser extension (Chrome, Brave, Edge, Opera, Vivaldi, Yandex Browser, Manifest V3) that auto-likes new profiles in the pure.app feed. Human-like pace, rate limits, city filter, runs in the background. Бесплатное расширение для автолайков в ленте pure.app.">
+<meta name="keywords" content="pure auto liker, автолайкер pure, pure app автолайк, pure.app бот, авто лайки pure, pure autoliker, pure autoliker github, автоматизация лайков pure, расширение pure, chrome extension pure, brave extension, edge extension, opera extension, vivaldi extension, яндекс браузер pure, pure dating automation, auto like bot, pure знакомства бот, mv3 extension, manifest v3, chrome devtools protocol, open source dating bot, like automation, свайпы pure, pure feed liker, kosttiik pure autoliker">
+<meta name="author" content="kosttiik">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="yandex-verification" content="">
+<meta name="google" content="notranslate">
+
+<link rel="canonical" href="https://kosttiik.github.io/pure-autoliker/">
+<link rel="alternate" hreflang="en" href="https://kosttiik.github.io/pure-autoliker/?lang=en">
+<link rel="alternate" hreflang="ru" href="https://kosttiik.github.io/pure-autoliker/?lang=ru">
+<link rel="alternate" hreflang="x-default" href="https://kosttiik.github.io/pure-autoliker/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pure Auto-Liker">
+<meta property="og:title" content="Pure Auto-Liker — auto-likes for Pure, on autopilot">
+<meta property="og:description" content="Open-source MV3 extension for Chrome, Brave, Edge, Opera, Vivaldi and Yandex Browser that auto-likes the pure.app feed. Only new profiles, human-like pace, city filter, runs in the background.">
+<meta property="og:url" content="https://kosttiik.github.io/pure-autoliker/">
+<meta property="og:image" content="https://kosttiik.github.io/pure-autoliker/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pure Auto-Liker — auto-likes for Pure, on autopilot">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ru_RU">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pure Auto-Liker — auto-likes for Pure, on autopilot">
+<meta name="twitter:description" content="Open-source MV3 extension that auto-likes the pure.app feed. Chrome · Brave · Edge · Opera · Yandex. Only new profiles, human-like pace, city filter.">
+<meta name="twitter:image" content="https://kosttiik.github.io/pure-autoliker/og.png">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+
+<link rel="preload" href="fonts/GalanoGrotesqueAltSemiBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/Geologica.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pure Auto-Liker",
+  "operatingSystem": "Chrome, Brave, Microsoft Edge, Opera, Vivaldi, Yandex Browser (Chromium, Manifest V3)",
+  "applicationCategory": "BrowserApplication",
+  "description": "Free open-source browser extension that auto-likes new profiles in the pure.app feed, with a human-like pace, rate limits and a city filter.",
+  "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "url": "https://kosttiik.github.io/pure-autoliker/",
+  "downloadUrl": "https://github.com/kosttiik/pure-autoliker",
+  "codeRepository": "https://github.com/kosttiik/pure-autoliker",
+  "author": { "@type": "Person", "name": "kosttiik", "url": "https://github.com/kosttiik" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is Pure Auto-Liker?", "acceptedAnswer": { "@type": "Answer", "text": "It is an open-source extension for Chrome, Brave, Edge, Opera, Vivaldi and Yandex Browser that automatically likes new profiles in the pure.app feed, skipping already-liked ones." } },
+    { "@type": "Question", "name": "Is it safe for my account?", "acceptedAnswer": { "@type": "Answer", "text": "The extension just clicks the same buttons you would, in your own browser. That said, automation may violate Pure's rules, so use it at your own risk and keep a human-like pace." } },
+    { "@type": "Question", "name": "Why does a debugging this browser banner appear?", "acceptedAnswer": { "@type": "Answer", "text": "Pure ignores synthetic clicks, so the extension dispatches real input through the Chrome DevTools Protocol. That makes the browser show a yellow debugging banner; do not dismiss it and do not open DevTools on that tab." } },
+    { "@type": "Question", "name": "Which browsers does it work in?", "acceptedAnswer": { "@type": "Answer", "text": "Any Chromium browser: Chrome, Brave, Microsoft Edge, Opera, Vivaldi, Arc and Yandex Browser. It is a Manifest V3 extension installed via Load unpacked." } },
+    { "@type": "Question", "name": "Are there rate limits and pauses?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can set delays between likes, a long pause every N likes and a daily cap so the behavior looks natural." } },
+    { "@type": "Question", "name": "Is it free and what license?", "acceptedAnswer": { "@type": "Answer", "text": "Completely free and open source under the GNU GPL-3.0 license. The code is on GitHub, so you can inspect, modify and build it yourself." } }
+  ]
+}
+</script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hdr">
+  <div class="container hdr-in">
+    <a href="#top" class="brand">
+      <span class="brand-tile"><svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true"><path d="M16 28C5.5 20.7 2 16.2 2 10.8 2 6.9 4.9 4 8.6 4c2.6 0 5 1.5 6.1 3.8C15.9 5.5 18.3 4 20.9 4 24.6 4 27.5 6.9 27.5 10.8 27.5 16.2 24 20.7 16 28Z" fill="#fff"/></svg></span>
+      <span class="brand-name">Pure Auto-Liker</span>
+    </a>
+    <nav class="nav">
+      <a href="#how" data-i18n="nav_how">How it works</a>
+      <a href="#features" data-i18n="nav_features">Features</a>
+      <a href="#faq" data-i18n="nav_faq">FAQ</a>
+      <a href="#safety" data-i18n="nav_safety">Safety</a>
+    </nav>
+    <button class="lang-btn" id="langBtn" title="Switch language" aria-label="Switch language">RU</button>
+    <a href="https://github.com/kosttiik/pure-autoliker" target="_blank" rel="noopener" class="gh-btn">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+</header>
+
+<span id="top"></span>
+
+<!-- HERO -->
+<section class="container hero">
+  <div>
+    <div class="eyebrow-pill reveal"><span class="dot"></span><span data-i18n="hero_eyebrow">Open-source · Chrome · Brave · Edge · Yandex · MV3</span></div>
+    <h1 class="h1 reveal" data-reveal-delay="80"><span data-i18n="hero_title_a">Auto-likes for Pure,</span> <span class="grad-text" data-i18n="hero_title_grad">on autopilot.</span></h1>
+    <p class="hero-sub reveal" data-reveal-delay="160" data-i18n="hero_sub">A browser extension that auto-likes new profiles in the pure.app feed — with a human-like pace, rate limits and a city filter. Open source, nothing extra.</p>
+    <div class="cta-row reveal" data-reveal-delay="240">
+      <a href="https://github.com/kosttiik/pure-autoliker" target="_blank" rel="noopener" class="btn btn-grad">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 7.1-1.01z"/></svg>
+        <span data-i18n="hero_cta_install">Install from GitHub</span>
+      </a>
+      <a href="#how" class="btn btn-outline" data-i18n="hero_cta_how">How it works</a>
+    </div>
+    <div class="stats reveal" data-reveal-delay="320">
+      <div class="stat"><b>GPLv3</b><span data-i18n="hero_meta_license">Open license</span></div>
+      <div class="stat-div"></div>
+      <div class="stat"><b id="versionStat">v2.2.0</b><span data-i18n="hero_meta_version">From GitHub releases</span></div>
+      <div class="stat-div"></div>
+      <div class="stat"><b>MV3</b><span data-i18n="hero_meta_browsers">Any Chromium browser</span></div>
+    </div>
+  </div>
+
+  <!-- POPUP MOCKUP (running) -->
+  <div class="mock-wrap reveal" data-reveal-delay="200">
+    <div class="mock-floaty">
+      <div class="popup">
+        <div class="popup-orbs"><span class="orb orb-1"></span><span class="orb orb-2"></span></div>
+        <div class="popup-head">
+          <span class="popup-hearts">
+            <svg viewBox="0 0 32 32" width="10" height="10" style="left:12%"><path d="M16 28C5.5 20.7 2 16.2 2 10.8 2 6.9 4.9 4 8.6 4c2.6 0 5 1.5 6.1 3.8C15.9 5.5 18.3 4 20.9 4 24.6 4 27.5 6.9 27.5 10.8 27.5 16.2 24 20.7 16 28Z"/></svg>
+            <svg viewBox="0 0 32 32" width="14" height="14" style="left:40%;animation-delay:1.6s"><path d="M16 28C5.5 20.7 2 16.2 2 10.8 2 6.9 4.9 4 8.6 4c2.6 0 5 1.5 6.1 3.8C15.9 5.5 18.3 4 20.9 4 24.6 4 27.5 6.9 27.5 10.8 27.5 16.2 24 20.7 16 28Z"/></svg>
+            <svg viewBox="0 0 32 32" width="11" height="11" style="left:68%;animation-delay:3.1s"><path d="M16 28C5.5 20.7 2 16.2 2 10.8 2 6.9 4.9 4 8.6 4c2.6 0 5 1.5 6.1 3.8C15.9 5.5 18.3 4 20.9 4 24.6 4 27.5 6.9 27.5 10.8 27.5 16.2 24 20.7 16 28Z"/></svg>
+          </span>
+          <span class="popup-logo"><svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true"><path d="M16 28C5.5 20.7 2 16.2 2 10.8 2 6.9 4.9 4 8.6 4c2.6 0 5 1.5 6.1 3.8C15.9 5.5 18.3 4 20.9 4 24.6 4 27.5 6.9 27.5 10.8 27.5 16.2 24 20.7 16 28Z" fill="#fff"/></svg></span>
+          <span class="popup-title"><b>Pure Auto-Liker</b><span data-i18n="popup_subtitle">smart auto-likes</span></span>
+          <span class="pill-status"><span class="g"></span><span data-i18n="popup_running">Running</span></span>
+          <span class="run-bar"><span></span></span>
+        </div>
+        <div class="popup-body">
+          <div class="counters">
+            <div class="counter"><b>128</b><span data-i18n="popup_session">session</span></div>
+            <div class="counter"><b>342</b><span data-i18n="popup_today">today</span></div>
+            <div class="counter"><b>5.1k</b><span data-i18n="popup_total">total</span></div>
+          </div>
+          <div class="chips">
+            <span class="pchip"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><b data-i18n="popup_city">Berlin</b></span>
+            <span class="pchip"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg><b>~110</b>/<span data-i18n="popup_hour">hr</span></span>
+          </div>
+          <div class="pbtns">
+            <span class="pbtn-start"><svg viewBox="0 0 24 24" width="15" height="15"><path d="M7 5v14l11-7z" fill="currentColor"/></svg><span data-i18n="popup_start">Start</span></span>
+            <span class="pbtn-stop"><svg viewBox="0 0 24 24" width="13" height="13"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg><span data-i18n="popup_stop">Stop</span></span>
+          </div>
+          <div class="pgroup">
+            <span class="pgroup-label"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><span data-i18n="popup_location">Location</span></span>
+            <span class="pselect"><span data-i18n="popup_city_full">Berlin</span><span>▾</span></span>
+          </div>
+          <div class="pgroup">
+            <span class="pgroup-label"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg><span data-i18n="popup_speed">Speed</span></span>
+            <div class="presets">
+              <span class="preset"><svg viewBox="0 0 24 20" width="16" height="13" fill="currentColor"><rect x="2" y="12" width="5" height="6" rx="1.5"/><rect x="9.5" y="8" width="5" height="10" rx="1.5" opacity=".28"/><rect x="17" y="3" width="5" height="15" rx="1.5" opacity=".28"/></svg><b data-i18n="popup_calm">Calm</b></span>
+              <span class="preset active"><svg viewBox="0 0 24 20" width="16" height="13" fill="currentColor"><rect x="2" y="12" width="5" height="6" rx="1.5"/><rect x="9.5" y="8" width="5" height="10" rx="1.5"/><rect x="17" y="3" width="5" height="15" rx="1.5" opacity=".28"/></svg><b data-i18n="popup_normal">Normal</b></span>
+              <span class="preset"><svg viewBox="0 0 24 20" width="16" height="13" fill="currentColor"><rect x="2" y="12" width="5" height="6" rx="1.5"/><rect x="9.5" y="8" width="5" height="10" rx="1.5"/><rect x="17" y="3" width="5" height="15" rx="1.5"/></svg><b data-i18n="popup_turbo">Turbo</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <div class="marquee-group">
+      <span class="kw">pure auto liker</span><span class="kw">автолайкер pure</span><span class="kw">pure.app бот</span><span class="kw">auto like bot</span><span class="kw">авто лайки pure</span><span class="kw">chrome extension</span><span class="kw">brave · edge · opera</span><span class="kw">MV3</span><span class="kw">яндекс браузер</span><span class="kw">pure dating automation</span><span class="kw">open source</span><span class="kw">like automation</span><span class="kw">свайпы pure</span>
+    </div>
+    <div class="marquee-group">
+      <span class="kw">pure auto liker</span><span class="kw">автолайкер pure</span><span class="kw">pure.app бот</span><span class="kw">auto like bot</span><span class="kw">авто лайки pure</span><span class="kw">chrome extension</span><span class="kw">brave · edge · opera</span><span class="kw">MV3</span><span class="kw">яндекс браузер</span><span class="kw">pure dating automation</span><span class="kw">open source</span><span class="kw">like automation</span><span class="kw">свайпы pure</span>
+    </div>
+  </div>
+</div>
+
+<!-- HOW -->
+<section id="how" class="container sec">
+  <div class="sec-head reveal">
+    <span class="eyebrow" data-i18n="how_eyebrow">In 4 steps</span>
+    <h2 class="h2" data-i18n="how_title">From install to first like in a couple of minutes</h2>
+    <p class="sec-sub" data-i18n="how_sub">No sign-up and no servers. Everything runs locally, in your browser and under your own session.</p>
+  </div>
+  <div class="steps">
+    <div class="step reveal"><span class="step-n">1</span><h3 data-i18n="step_1_title">Install the extension</h3><p data-i18n="step_1_text">Download the repo, turn on Developer mode and hit “Load unpacked”.</p></div>
+    <div class="step reveal" data-reveal-delay="90"><span class="step-n">2</span><h3 data-i18n="step_2_title">Open the pure.app feed</h3><p data-i18n="step_2_text">Log in to pure.app and open the profile feed.</p></div>
+    <div class="step reveal" data-reveal-delay="180"><span class="step-n">3</span><h3 data-i18n="step_3_title">Hit Start</h3><p data-i18n="step_3_text">Pick a filter and speed. For the first run, enable Dry-run to check it.</p></div>
+    <div class="step reveal" data-reveal-delay="270"><span class="step-n">4</span><h3 data-i18n="step_4_title">Likes run on their own</h3><p data-i18n="step_4_text">Close the popup — it keeps going in the background, counter shows on the icon.</p></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="sec-white">
+  <div class="container sec">
+    <div class="sec-head reveal">
+      <span class="eyebrow" data-i18n="feat_eyebrow">Features</span>
+      <h2 class="h2" data-i18n="feat_title">Everything you need for tidy automation</h2>
+      <p class="sec-sub" data-i18n="feat_sub">It likes smartly, remembers history and keeps a human rhythm — so everything looks natural.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat reveal"><span class="feat-ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg></span><h3 data-i18n="feat_1_title">Only new profiles</h3><p data-i18n="feat_1_text">Skips already-liked ones, likes only new profiles and remembers them across runs (24 hours).</p></div>
+      <div class="feat reveal" data-reveal-delay="90"><span class="feat-ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5l3.4 2"/></svg></span><h3 data-i18n="feat_2_title">Human-like pace</h3><p data-i18n="feat_2_text">Configurable delays between likes, a periodic long pause and a daily cap.</p></div>
+      <div class="feat reveal" data-reveal-delay="180"><span class="feat-ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span><h3 data-i18n="feat_3_title">City &amp; radius filter</h3><p data-i18n="feat_3_text">From “Nearby” to “Whole universe” or a specific city — the extension sets the filter for you.</p></div>
+      <div class="feat reveal"><span class="feat-ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></span><h3 data-i18n="feat_4_title">Speed presets</h3><p data-i18n="feat_4_text">Calm, Normal, Turbo — or fine-tune delays and scrolling by hand.</p></div>
+      <div class="feat reveal" data-reveal-delay="90"><span class="feat-ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg></span><h3 data-i18n="feat_5_title">Runs in background</h3><p data-i18n="feat_5_text">Close the popup and switch tabs — liking continues, counter on the icon.</p></div>
+      <div class="feat reveal" data-reveal-delay="180"><span class="feat-ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span><h3 data-i18n="feat_6_title">Dry-run mode</h3><p data-i18n="feat_6_text">Highlights the hearts without clicking — a safe way to check the first run.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE -->
+<section class="container sec showcase">
+  <div class="reveal">
+    <span class="eyebrow" data-i18n="show_eyebrow">The interface</span>
+    <h2 class="h2" data-i18n="show_title">A tidy popup with everything at hand</h2>
+    <p class="sec-sub" data-i18n="show_sub" style="margin-bottom:26px">Counters, status, location and speed on one screen. Fine-tuning and hints live just below.</p>
+    <div class="points">
+      <div class="point"><span class="point-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><div><h3 data-i18n="show_1_title">Live counters</h3><p data-i18n="show_1_text">Likes this session, today and total — updated on the fly.</p></div></div>
+      <div class="point"><span class="point-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><div><h3 data-i18n="show_2_title">Trusted clicks (CDP)</h3><p data-i18n="show_2_text">Real input via the Chrome DevTools Protocol so Pure registers the likes.</p></div></div>
+      <div class="point"><span class="point-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><div><h3 data-i18n="show_3_title">Presets and fine-tuning</h3><p data-i18n="show_3_text">Quick modes plus manual delays, pauses and a daily cap.</p></div></div>
+    </div>
+  </div>
+  <div class="mock-wrap reveal" data-reveal-delay="120">
+    <div class="popup popup-sm">
+      <div class="popup-head">
+        <span class="popup-logo" style="width:38px;height:38px;border-radius:12px"><svg viewBox="0 0 32 32" width="20" height="20"><path d="M16 28C5.5 20.7 2 16.2 2 10.8 2 6.9 4.9 4 8.6 4c2.6 0 5 1.5 6.1 3.8C15.9 5.5 18.3 4 20.9 4 24.6 4 27.5 6.9 27.5 10.8 27.5 16.2 24 20.7 16 28Z" fill="#fff"/></svg></span>
+        <span class="popup-title" style="flex:1"><b style="font-size:15px">Pure Auto-Liker</b><span data-i18n="popup_subtitle">smart auto-likes</span></span>
+        <span class="pill-status"><span class="y"></span><span data-i18n="popup_paused">Paused</span></span>
+      </div>
+      <div class="popup-body" style="gap:11px">
+        <div class="popup-note"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#c88bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 2z"/></svg><span><b data-i18n="popup_hint_title">Tip:</b> <span data-i18n="popup_hint">run the first pass with Dry-run — hearts get highlighted without any clicks.</span></span></div>
+        <div class="toggle-row"><span data-i18n="popup_dryrun">Dry-run</span><span class="sw on"><i></i></span></div>
+        <div class="toggle-row"><span data-i18n="popup_autofilter">Auto-filter</span><span class="sw off"><i></i></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SAFETY -->
+<section id="safety" class="sec-dark">
+  <div class="container sec safety-grid">
+    <div class="reveal">
+      <span class="safe-eyebrow" data-i18n="safe_eyebrow">Transparency</span>
+      <h2 class="h2" data-i18n="safe_title">Open source, no servers</h2>
+      <p class="safe-sub" data-i18n="safe_sub">An educational project: exploring MV3, the Chrome DevTools Protocol and common anti-bot patterns on your own account.</p>
+    </div>
+    <div class="safe-list reveal" data-reveal-delay="120">
+      <div class="safe-item"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg></span><div><h3 data-i18n="safe_1_title">Fully open source (GPL-3.0)</h3><p data-i18n="safe_1_text">You can read every line and build it yourself — no hidden behavior.</p></div></div>
+      <div class="safe-item"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><div><h3 data-i18n="safe_2_title">Sends nothing outside</h3><p data-i18n="safe_2_text">Runs only in your browser, under your session. No data leaves your machine.</p></div></div>
+      <div class="safe-item"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 5-3.5 7.6-7 9-3.5-1.4-7-4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span><div><h3 data-i18n="safe_3_title">Doesn’t break Pure</h3><p data-i18n="safe_3_text">It doesn’t bypass payments, touch anyone else’s data or exploit vulnerabilities.</p></div></div>
+      <div class="safe-item"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3l7 17 2.3-6.7L20 11 4 3z"/></svg></span><div><h3 data-i18n="safe_4_title">The same clicks you’d make</h3><p data-i18n="safe_4_text">It clicks the same buttons you would by hand — just automatically.</p></div></div>
+      <div class="safe-note"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span data-i18n="safe_note">Automating actions may go against Pure’s terms of service. Use it at your own risk — any account limitations are on you.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="container sec faq-wrap">
+  <div class="faq-head reveal">
+    <span class="eyebrow">FAQ</span>
+    <h2 class="h2" data-i18n="faq_title">Frequently asked</h2>
+    <p class="sec-sub" data-i18n="faq_sub">The short answers to what people ask most about Pure Auto-Liker.</p>
+  </div>
+  <div class="faq-list" id="faqList">
+    <div class="faq-item open reveal"><button class="faq-q"><span data-i18n="faq_1_q">What is Pure Auto-Liker?</span><span class="plus"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#211d1e" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span></button><div class="faq-a"><p data-i18n="faq_1_a">It’s an open-source extension for Chrome, Brave, Edge, Opera, Vivaldi and Yandex Browser that automatically likes new profiles in the pure.app feed, skipping already-liked ones.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q"><span data-i18n="faq_2_q">Is it safe for my account?</span><span class="plus"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#211d1e" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span></button><div class="faq-a"><p data-i18n="faq_2_a">The extension just clicks the same buttons you would, in your own browser. That said, automation may violate Pure’s rules, so use it at your own risk and keep a human-like pace.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q"><span data-i18n="faq_3_q">Why does a “debugging this browser” banner appear?</span><span class="plus"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#211d1e" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span></button><div class="faq-a"><p data-i18n="faq_3_a">Pure ignores synthetic clicks, so the extension dispatches real input through the Chrome DevTools Protocol. That makes the browser show a yellow debugging banner — don’t dismiss it and don’t open DevTools on that tab.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q"><span data-i18n="faq_4_q">Does it work in Chrome, Brave and Yandex Browser?</span><span class="plus"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#211d1e" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span></button><div class="faq-a"><p data-i18n="faq_4_a">Yes. It’s a Manifest V3 extension for any Chromium browser — Chrome, Brave, Microsoft Edge, Opera, Vivaldi, Arc and Yandex Browser. Install it via “Load unpacked”.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q"><span data-i18n="faq_5_q">Are there rate limits and pauses?</span><span class="plus"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#211d1e" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span></button><div class="faq-a"><p data-i18n="faq_5_a">Yes. You can set delays between likes, a long pause every N likes and a daily cap — so the behavior looks natural.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q"><span data-i18n="faq_6_q">Is it free and what license?</span><span class="plus"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#211d1e" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span></button><div class="faq-a"><p data-i18n="faq_6_a">Completely free and open source under the GNU GPL-3.0 license. The code is on GitHub — you can inspect, modify and build it yourself.</p></div></div>
+  </div>
+</section>
+
+<!-- TAGS -->
+<section class="sec-white">
+  <div class="container tags-wrap">
+    <div class="reveal">
+      <span class="eyebrow" data-i18n="tags_eyebrow">Keywords</span>
+      <h2 class="h2" data-i18n="tags_title">This is what people search for</h2>
+      <p class="sec-sub" data-i18n="tags_sub" style="margin-left:auto;margin-right:auto;max-width:560px">Popular queries around auto-liking on Pure — the ones this project is found by.</p>
+    </div>
+    <div class="tags-cloud reveal" data-reveal-delay="100" id="tagsCloud"></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="container sec">
+  <div class="cta-band reveal">
+    <h2 data-i18n="cta_title">Ready to like on autopilot?</h2>
+    <p data-i18n="cta_sub">Install it free from GitHub in a couple of minutes and run the first pass in Dry-run.</p>
+    <div class="cta-btns">
+      <a href="https://github.com/kosttiik/pure-autoliker" target="_blank" rel="noopener" class="btn btn-white"><svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span data-i18n="cta_install">Open on GitHub</span></a>
+      <a href="https://github.com/kosttiik/pure-autoliker#readme" target="_blank" rel="noopener" class="btn btn-glass" data-i18n="cta_docs">Read the README</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container footer-in">
+    <div class="footer-brand">
+      <span class="footer-tile"><svg viewBox="0 0 32 32" width="17" height="17"><path d="M16 28C5.5 20.7 2 16.2 2 10.8 2 6.9 4.9 4 8.6 4c2.6 0 5 1.5 6.1 3.8C15.9 5.5 18.3 4 20.9 4 24.6 4 27.5 6.9 27.5 10.8 27.5 16.2 24 20.7 16 28Z" fill="#fff"/></svg></span>
+      <div><div class="footer-name">Pure Auto-Liker</div><div class="footer-tag" data-i18n="footer_tagline">Auto-likes for Pure · open-source</div></div>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/kosttiik/pure-autoliker" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/kosttiik/pure-autoliker#readme" target="_blank" rel="noopener">README</a>
+      <a href="https://github.com/kosttiik/pure-autoliker/releases" target="_blank" rel="noopener" data-i18n="footer_releases">Releases</a>
+      <a href="https://github.com/kosttiik/pure-autoliker/blob/main/LICENSE" target="_blank" rel="noopener" data-i18n="footer_license">GPL-3.0 License</a>
+      <a href="#faq" data-i18n="nav_faq">FAQ</a>
+    </div>
+  </div>
+  <div class="footer-fine" data-i18n="footer_disclaimer">This project is not affiliated with Pure and is made for educational purposes. Pure is a trademark of its respective owner. Automation may violate the service’s terms of use; use at your own risk. Licensed under the GNU GPL-3.0.</div>
+</footer>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

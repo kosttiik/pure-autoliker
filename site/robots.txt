@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kosttiik.github.io/pure-autoliker/sitemap.xml

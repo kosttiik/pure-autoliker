@@ -1,9 +1,12 @@
 # Pure Auto-Liker
 
-A Chromium browser extension (Chrome, Yandex Browser, etc.) that auto-likes
-profiles in the [pure.app](https://pure.app) feed. It skips profiles you've
-already liked, likes only new ones, keeps a human-like pace, and can set the
-distance filter — or an arbitrary city — for you.
+A Chromium browser extension (Chrome, Brave, Edge, Opera, Vivaldi, Yandex
+Browser, etc.) that auto-likes profiles in the [pure.app](https://pure.app)
+feed. It skips profiles you've already liked, likes only new ones, keeps a
+human-like pace, and can set the distance filter — or an arbitrary city — for
+you.
+
+**Landing page:** https://kosttiik.github.io/pure-autoliker/ (bilingual RU/EN).
 
 The popup UI and the on-site labels it looks for both switch between English
 and Russian automatically, based on the browser's locale.

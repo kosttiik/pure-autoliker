@@ -1,0 +1,16 @@
+{
+  "name": "Pure Auto-Liker",
+  "short_name": "Pure Auto-Liker",
+  "description": "Open-source browser extension that auto-likes the pure.app feed.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f1ec",
+  "theme_color": "#0e0916",
+  "icons": [
+    { "src": "assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "assets/pure-icon128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

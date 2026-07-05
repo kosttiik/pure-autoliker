@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Pure Auto-Liker",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Auto-likes for the pure.app feed: skips already-liked profiles, rate limiting, auto location filter (including arbitrary cities), speed presets.",
   "permissions": ["storage", "activeTab", "debugger"],
   "host_permissions": ["https://pure.app/*"],
