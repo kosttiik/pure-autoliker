@@ -619,7 +619,7 @@
         return 'rejected';
       }
       if (!btn.isConnected) return 'liked-new';  // card removed — the like went through
-      await sleep(100);
+      await sleep(15);
     }
     return 'uncertain';
   }
@@ -676,7 +676,7 @@
     // signal the like counts as successful: the trusted click is reliable,
     // liked cards are pre-filtered by SVG path, and inject.js often fails to
     // load under Pure's CSP — network confirmation can't be depended on.
-    const outcome = await waitLikeOutcome(target.btn, t0, 500);
+    const outcome = await waitLikeOutcome(target.btn, t0, 30);
     if (outcome === 'blocked') return false; // auto-pause already triggered
 
     if (outcome === 'already' || outcome === 'rejected') {

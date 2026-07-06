@@ -24,7 +24,7 @@ body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--ff-bod
 ::selection{background:rgba(230,33,154,.16)}
 a{color:inherit}
 img{max-width:100%}
-.wrap{position:relative;overflow-x:hidden}
+.wrap{position:relative;overflow-x:clip}
 .container{max-width:1200px;margin:0 auto;padding-left:24px;padding-right:24px}
 
 /* keyframes */
