@@ -1,8 +1,8 @@
 {
   "name": "Pure Auto-Liker",
   "short_name": "Pure Auto-Liker",
-  "description": "Open-source browser extension that auto-likes the pure.app feed.",
-  "lang": "en",
+  "description": "Open-source расширение для браузера: автолайки в ленте pure.app.",
+  "lang": "ru",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
