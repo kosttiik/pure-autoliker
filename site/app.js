@@ -3,7 +3,7 @@
   "use strict";
 
   var REPO = "kosttiik/pure-autoliker";
-  var FALLBACK_VERSION = "v2.2.1";
+  var FALLBACK_VERSION = "v2.2.2";
 
   var TAGS = [
     "pure auto liker", "pure autoliker", "pure auto-liker", "автолайкер pure", "пьюр автолайкер",
@@ -143,7 +143,7 @@
       var saved = localStorage.getItem("pl_lang");
       if (saved === "ru" || saved === "en") return saved;
     } catch (e) {}
-    return (navigator.language || "en").toLowerCase().indexOf("ru") === 0 ? "ru" : "en";
+    return "ru";
   }
 
   function applyLang(lang) {
