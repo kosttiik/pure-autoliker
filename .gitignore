@@ -10,3 +10,6 @@
 *.log
 tmp/
 .claude/
+
+# build output (generated in CI)
+dist/

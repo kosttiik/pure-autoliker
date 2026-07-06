@@ -3,22 +3,26 @@
   "use strict";
 
   var REPO = "kosttiik/pure-autoliker";
-  var FALLBACK_VERSION = "v2.2.0";
+  var FALLBACK_VERSION = "v2.2.1";
 
-  // SEO long-tail keyword cloud (language-neutral / bilingual mix).
   var TAGS = [
-    "pure auto liker", "автолайкер pure", "pure app автолайк", "pure.app бот", "авто лайки pure",
-    "pure autoliker github", "автоматизация лайков", "расширение для pure", "chrome extension pure",
-    "brave extension pure", "edge extension pure", "opera extension", "vivaldi extension", "arc browser",
-    "яндекс браузер pure", "pure dating automation", "auto like bot", "pure знакомства бот", "свайпы pure",
+    "pure auto liker", "pure autoliker", "pure auto-liker", "автолайкер pure", "пьюр автолайкер",
+    "пьюр автолайки", "пьюр автолайк", "пур автолайкер", "автолайки пьюр", "автолайк пьюр", "лайки пьюр",
+    "pure app автолайк", "pure.app бот", "пьюр бот", "бот пьюр", "авто лайки pure", "авто-лайки pure",
+    "автолайки pure", "pure autoliker github", "автоматизация лайков", "автоматизация пьюр", "расширение для pure",
+    "расширение пьюр", "chrome extension pure", "brave extension pure", "edge extension pure", "opera extension",
+    "vivaldi extension", "arc browser", "яндекс браузер pure", "пьюр яндекс браузер", "pure dating automation",
+    "auto like bot", "like bot pure", "pure знакомства бот", "пьюр знакомства", "свайпы pure", "свайпы пьюр",
     "like automation", "mv3 extension", "manifest v3 liker", "chrome devtools protocol", "open source dating bot",
-    "pure feed liker", "авто-лайки для pure", "бот для pure", "pure app bot", "auto swipe pure", "like bot chrome",
-    "pure app liker", "auto liker для pure", "pure бот лайки", "расширение chrome pure", "pure app extension",
-    "automate pure likes", "pure likes bot", "бесплатный автолайкер", "скрипт лайков pure", "pure feed automation",
-    "yandex browser extension", "pure знакомства автолайк", "auto heart pure", "pure swipe bot", "массовые лайки pure",
-    "pure app автоматизация", "dating app auto liker", "pure liker github", "kosttiik pure autoliker",
-    "browser extension likes", "pure app chrome extension", "авто свайп pure", "pure feed bot", "gpl open source",
-    "chromium extension", "pure autoliker 2026"
+    "pure feed liker", "авто-лайки для pure", "бот для pure", "бот для пьюр", "pure app bot", "auto swipe pure",
+    "like bot chrome", "pure app liker", "auto liker для pure", "pure бот лайки", "расширение chrome pure",
+    "pure app extension", "automate pure likes", "pure likes bot", "бесплатный автолайкер", "бесплатный автолайкер pure",
+    "скрипт лайков pure", "pure feed automation", "yandex browser extension", "pure знакомства автолайк",
+    "auto heart pure", "pure swipe bot", "массовые лайки pure", "массовые лайки пьюр", "pure app автоматизация",
+    "dating app auto liker", "pure liker github", "kosttiik pure autoliker", "browser extension likes",
+    "pure app chrome extension", "авто свайп pure", "pure feed bot", "gpl open source", "chromium extension",
+    "скачать автолайкер pure", "download pure autoliker", "pure app бот скачать", "автолайкинг pure",
+    "pure autoliker 2026", "пьюр автолайкер расширение"
   ];
 
   var DICT = {
